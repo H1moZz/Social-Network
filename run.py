@@ -1,4 +1,4 @@
-from SocialNetwork import app
+from social_network.app import myapp
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    myapp.run(port = 5000, debug = True)
