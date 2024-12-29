@@ -1,9 +1,11 @@
-from .app import myapp, db
-from .models import User, Post
-from flask import jsonify, request
+from social_network.app import db
+from social_network.models import User
+from flask import jsonify, request, Blueprint
 from flask_restful import Api, Resource, reqparse
 
-api = Api(myapp)
+users_bp = Blueprint("users",__name__)
+
+users_api = Api(users_bp)
 
 class UserListResource(Resource):
     def get(self):
@@ -63,6 +65,20 @@ class UserResource(Resource):
         db.session.commit()
 
         return {"message": "User is succsesfuly deleted!"}
+    
+    def patch(self, id):
+        user = User.query.get(id)
 
-api.add_resource(UserListResource, "/users")
-api.add_resource(UserResource, "/users/<int:id>")
+        if not user:
+            return {"Error": "User not found!"}, 404
+        
+        if not user.is_deleted:
+            return {"message": "User is already active!"}, 400
+        
+        user.is_deleted = False
+        db.session.commit()
+
+        return {"message": "User successfully restored!", "id": user.id}
+
+users_api.add_resource(UserListResource, "/users")
+users_api.add_resource(UserResource, "/users/<int:id>")

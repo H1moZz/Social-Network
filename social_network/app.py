@@ -1,16 +1,20 @@
 from flask import Flask
 from social_network.config import Config
-from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
-myapp = Flask(__name__)
+db = SQLAlchemy()
 
-myapp.config.from_object(Config)
+def create_app():
+    myapp = Flask(__name__)
 
-db = SQLAlchemy(myapp)
+    myapp.config.from_object(Config)
 
-migrate = Migrate(myapp, db)
+    db.init_app(myapp)
 
-with myapp.app_context():
-    from .models import *
-    from social_network import routes
+    from .routes import posts_bp, comments_bp, users_bp
+
+    myapp.register_blueprint(posts_bp, url_prefix="/api")
+    myapp.register_blueprint(comments_bp, url_prefix="/api")
+    myapp.register_blueprint(users_bp, url_prefix="/api")
+
+    return myapp
