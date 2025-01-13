@@ -1,20 +1,21 @@
 from social_network.app import db
 
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key = True)
-    username = db.Column(db.String(80), unique = True, nullable = False)
-    email = db.Column(db.String(100), unique = True, nullable = False)
-    password = db.Column(db.String(120), nullable = False)
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
+    avatar = db.Column(db.String(200), nullable=True)
     is_deleted = db.Column(db.Boolean, default=False)
     posts = db.relationship('Post', backref='author', lazy=True)
 
     def __repr__(self):
         return f"<User> {self.username}"
-    
+
     def __init__(self, username, email, password):
-        self.password = password
-        self.email = email
         self.username = username
+        self.email = email
+        self.password = password
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
