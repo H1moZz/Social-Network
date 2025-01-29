@@ -1,7 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
 from social_network.config import Config
-from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -14,17 +13,16 @@ def create_app():
 
     migrate = Migrate(myapp, db)
 
-    jwt = JWTManager(myapp)
-
-    CORS(myapp, resources={r"/*": {"origins": "*"}}) 
+    CORS(myapp, origins="http://localhost:3000", supports_credentials=True) 
 
     db.init_app(myapp)
 
-    from .routes import posts_bp, comments_bp, users_bp, auth_bp
+    from .routes import posts_bp, comments_bp, users_bp, auth_bp, messenger_bp
 
     myapp.register_blueprint(posts_bp, url_prefix="/api")
     myapp.register_blueprint(comments_bp, url_prefix="/api")
     myapp.register_blueprint(users_bp, url_prefix="/api/users")
     myapp.register_blueprint(auth_bp, url_prefix="/api/auth")
+    myapp.register_blueprint(messenger_bp, url_prefix='/api/messenger')
 
     return myapp

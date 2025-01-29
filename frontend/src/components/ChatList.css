@@ -1,0 +1,42 @@
+.chat-list {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chat-list h1 {
+    text-align: center;
+    color: #333;
+}
+
+.chat-list ul {
+    list-style: none;
+    padding: 0;
+}
+
+.chat-list li {
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.chat-list li:hover {
+    background-color: #f0f0f0;
+}
+
+.chat-item h3 {
+    margin: 0;
+    color: #555;
+}
+
+.chat-item p {
+    margin: 5px 0 0;
+    color: #777;
+    font-size: 0.9em;
+}

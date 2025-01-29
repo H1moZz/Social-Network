@@ -1,6 +1,7 @@
 from flask import Blueprint, request
-from flask_restful import Api, Resource
+from flask_restful import Api
 from flask_cors import CORS
+from social_network.routes.AuntResource import AuthenticatedResource
 from social_network.app import db
 from social_network.models import Comment
 
@@ -8,7 +9,7 @@ comments_bp = Blueprint("comments", __name__)
 CORS(comments_bp)
 comments_api = Api(comments_bp)
 
-class CommentsListResource(Resource):
+class CommentsListResource(AuthenticatedResource):
     def get(self, post_id):
         comments = Comment.query.filter_by(post_id=post_id).all()
         return [
@@ -30,7 +31,7 @@ class CommentsListResource(Resource):
 
         return {"id": new_comment.id, "content": new_comment.content, "author_id": new_comment.author_id, "post_id": new_comment.post_id}, 201
 
-class CommetResource(Resource):
+class CommetResource(AuthenticatedResource):
     def delete(self, comment_id, post_id):
         comment = Comment.query.filter_by(id=comment_id, post_id=post_id).first()
 
