@@ -61,8 +61,8 @@ class LogIn(Resource):
             'session_token', 
             value=session_token, 
             httponly=True, 
-            samesite='Lax', 
-            secure=False
+            samesite='None', 
+            secure=True
         )
         return response
     

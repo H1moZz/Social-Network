@@ -1,12 +1,7 @@
-from flask import request, Blueprint
-from flask_restful import Resource, Api
+from flask import request
+from flask_restful import Resource
 from social_network.models import Session
 from datetime import datetime
-from flask_cors import CORS
-
-authres_bp = Blueprint("auth", __name__)
-CORS(authres_bp, supports_credentials=True, resources={r"/api/*": {"origins": "*"}})
-authres_api = Api(authres_bp)
 
 class AuthenticatedResource(Resource):
     def dispatch_request(self, *args, **kwargs):
@@ -18,5 +13,3 @@ class AuthenticatedResource(Resource):
         request.user_id = session.user_id
 
         return super().dispatch_request(*args, **kwargs)
-
-authres_api.add_resource(AuthenticatedResource, '/auntres')
