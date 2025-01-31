@@ -8,10 +8,10 @@ from social_network.routes.AuntResource import AuthenticatedResource
 import os
 
 users_bp = Blueprint("users", __name__)
-CORS(users_bp)
+CORS(users_bp, supports_credentials=True)
 users_api = Api(users_bp)
 
-UPLOAD_FOLDER = 'pf_photos'  # Исправили слэш
+UPLOAD_FOLDER = 'pf_photos'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 class UserListResource(AuthenticatedResource):
@@ -76,7 +76,7 @@ class UserResource(AuthenticatedResource):
     
 class UserMeResource(AuthenticatedResource):
     def get(self):
-        current_user_id = request.user_id  # Теперь берём user_id из сессии
+        current_user_id = request.user_id
         user = User.query.get(current_user_id)
         if not user or user.is_deleted:
             return {"error": "Пользователь не найден"}, 404
@@ -88,9 +88,9 @@ class UserMeResource(AuthenticatedResource):
 
         return {"id": user.id, "username": user.username, "email": user.email, "avatar_url": avatar_url}
     
-class UserUploadAvatar(AuthenticatedResource):  # Исправили название класса
+class UserUploadAvatar(AuthenticatedResource):  
     def post(self):
-        current_user_id = request.user_id  # Заменили get_jwt_identity()
+        current_user_id = request.user_id
         if 'avatar' not in request.files:
             return {"error": "Файл не найден"}, 400
         

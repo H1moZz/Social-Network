@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import './ChatList.css';
+import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
 const ChatList = () => {
@@ -8,16 +8,6 @@ const ChatList = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
-
-    const handleLogout = async () => {
-        try {
-            await api.post('auth/logout', {}, { withCredentials: true });
-
-            navigate('/');
-        } catch (error) {
-            console.error("Ошибка при выходе:", error);
-        }
-    };
 
     useEffect(() => {
         const fetchChats = async () => {
@@ -50,9 +40,6 @@ const ChatList = () => {
     return (
         <div className="chat-list">
             <h1>Your Chats</h1>
-            <button onClick={handleLogout} className="logout-button">
-                Выйти из профиля
-            </button>
             {chats.length === 0 ? (
                 <p>No chats found. Start a new conversation!</p>
             ) : (
@@ -60,8 +47,7 @@ const ChatList = () => {
                     {chats.map((chat) => (
                         <li key={chat.id} onClick={() => handleChatClick(chat.id)}>
                             <div className="chat-item">
-                                <h3>Chat with {chat.participants.join(', ')}</h3>
-                                <p>Chat ID: {chat.id}</p>
+                                <h3>Chat with {chat.participants}</h3>  
                             </div>
                         </li>
                     ))}

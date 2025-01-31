@@ -1,22 +1,28 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
+import profileIcon from '../assets/icons/pf.png';
+import './NavBar.css';
 
-function NavBar() {
+const Navbar = () => {
   return (
-    <nav>
-      <ul>
-        <li>
-          <Link to="/">Вход</Link>
-        </li>
-        <li>
-          <Link to="/profile">Профиль</Link>
-        </li>
-        <li>
-          <Link to="/avatar">Установить аватарку</Link>
-        </li>
-      </ul>
+    <nav className="navbar-container">
+      <li>
+        <button className="navbar-button">
+          <NavLink to="/profile" activeClassName="active">
+          <img src={profileIcon} alt="profile" className="icon" />
+          </NavLink>
+        </button>
+      </li>
+      <li>
+        <button className="navbar-button">
+          <NavLink to="/chats" activeClassName="active">
+            <span className="icon">💬</span>
+          </NavLink>
+        </button>
+      </li>
+      {/* Добавь другие кнопки по аналогии */}
     </nav>
   );
-}
+};
 
-export default NavBar;
+export default Navbar;

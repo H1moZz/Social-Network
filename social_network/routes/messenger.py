@@ -27,7 +27,7 @@ class ChatListResource(AuthenticatedResource):
         chats = user.chats  
         return jsonify([{
             'id': chat.id,
-            'participants': [participant.username for participant in chat.participants]
+            'participants': next(participant.username for participant in chat.participants if participant.id != current_user_id)
         } for chat in chats])
 
     def post(self):

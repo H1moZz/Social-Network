@@ -1,29 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import './UserProfile.css'; // Создадим новый файл стилей
+import { useNavigate } from 'react-router-dom';
+import './UserProfile.css';
 
 function UserProfile() {
     const [user, setUser] = useState(null);
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        try {
+            await api.post('auth/logout', { withCredentials: true });
+
+            navigate('/');
+        } catch (error) {
+            console.error("Ошибка при выходе:", error);
+        }
+    };
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            api.get('/users/me', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            })
-            .then((response) => {
-                setUser(response.data);
-                setIsLoading(false);
-            })
-            .catch((error) => {
-                setError(error);
-                setIsLoading(false);
-            });
-        }
+        api.get('/users/me',{
+            withCredentials: true
+        })
+        .then((response) => {
+            setUser(response.data);
+            setIsLoading(false);
+        })
+        .catch((error) => {
+            setError(error);
+            setIsLoading(false);
+        });
     }, []);
 
     if (isLoading) {
@@ -90,7 +97,7 @@ function UserProfile() {
                     <button className="edit-button">
                         ✏️ Редактировать профиль
                     </button>
-                    <button className="logout-button">
+                    <button onClick={handleLogout} className="logout-button">
                         🚪 Выйти
                     </button>
                 </div>
