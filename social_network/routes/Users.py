@@ -8,7 +8,7 @@ from social_network.routes.AuntResource import AuthenticatedResource
 import os
 
 users_bp = Blueprint("users", __name__)
-CORS(users_bp, supports_credentials=True)
+CORS(users_bp, supports_credentials=True, resources={r"/api/*": {"origins": "*"}})
 users_api = Api(users_bp)
 
 UPLOAD_FOLDER = 'pf_photos'

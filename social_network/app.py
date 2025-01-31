@@ -13,7 +13,7 @@ def create_app():
 
     migrate = Migrate(myapp, db)
 
-    CORS(myapp, origins="http://localhost:3000", supports_credentials=True) 
+    CORS(myapp, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True) 
 
     db.init_app(myapp)
 

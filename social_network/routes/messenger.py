@@ -6,7 +6,7 @@ from social_network.models import Chat, Message, User
 from social_network.routes.AuntResource import AuthenticatedResource
 
 messenger_bp = Blueprint('messenger', __name__)
-CORS(messenger_bp, supports_credentials=True)
+CORS(messenger_bp, supports_credentials=True, resources={r"/api/*": {"origins": "*"}})
 messenger_api = Api(messenger_bp)
 
 # Парсер для создания чата

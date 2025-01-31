@@ -6,7 +6,7 @@ from social_network.app import db
 from social_network.models import Comment
 
 comments_bp = Blueprint("comments", __name__)
-CORS(comments_bp)
+CORS(comments_bp, resources={r"/api/*": {"origins": "*"}})
 comments_api = Api(comments_bp)
 
 class CommentsListResource(AuthenticatedResource):

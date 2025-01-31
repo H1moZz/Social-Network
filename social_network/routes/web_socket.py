@@ -5,7 +5,7 @@ from social_network.app import db
 from datetime import datetime
 from flask_cors import CORS
 
-socketio = SocketIO(cors_allowed_origins="*")
+socketio = SocketIO(cors_allowed_origins="*",  resources={r"/api/*": {"origins": "*"}})
 
 def auntificate_websocket():
     session_token = request.cookies.get('session_token')

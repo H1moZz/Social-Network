@@ -5,7 +5,7 @@ from social_network.app import db
 from social_network.models import Post
 
 posts_bp = Blueprint('posts', __name__)
-CORS(posts_bp)
+CORS(posts_bp, resources={r"/api/*": {"origins": "*"}})
 posts_api = Api(posts_bp)
 
 class PostCreate(Resource):

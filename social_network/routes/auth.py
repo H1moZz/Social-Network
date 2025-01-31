@@ -9,7 +9,7 @@ from datetime import datetime
 from social_network.routes.AuntResource import AuthenticatedResource
 
 auth_bp = Blueprint("auth", __name__)
-CORS(auth_bp, supports_credentials=True, origins="http://localhost:3000")
+CORS(auth_bp, supports_credentials=True, resources={r"/api/*": {"origins": "*"}})
 auth_api = Api(auth_bp)
 
 class Registration(Resource):
