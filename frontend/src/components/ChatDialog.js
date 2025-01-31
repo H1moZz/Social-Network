@@ -13,7 +13,7 @@ const ChatDialog = () => {
     const [userId, setUserId] = useState(null);
 
     useEffect(() => {
-        socketRef.current = io('http://localhost:3001', {
+        socketRef.current = io('https://social-network-h0kc.onrender.com', {
             transports: ['websocket']
         });
         socketRef.current.on('user_connected', (data) => {
