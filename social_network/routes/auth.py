@@ -39,7 +39,7 @@ class LogIn(Resource):
 
         user = User.query.filter_by(email=args["email"]).first()
         if not user or not bcrypt.checkpw(args["password"].encode("utf-8"), user.password.encode('utf-8')):
-            return {"error": "Invalid email or password!"}, 401
+            return {"error": "Неверная почта или пароль!"}, 401
 
         current_user_id = user.id
         session_token = 0
@@ -61,8 +61,8 @@ class LogIn(Resource):
             'session_token', 
             value=session_token, 
             httponly=True, 
-            samesite='None', 
-            secure=True
+            samesite='Lax', 
+            secure=False,
         )
         return response
     

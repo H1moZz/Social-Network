@@ -11,8 +11,8 @@ function UserProfile() {
 
     const handleLogout = async () => {
         try {
-            await api.post('auth/logout', { withCredentials: true });
-
+            await api.post('/api/auth/logout', { withCredentials: true });
+            localStorage.clear();
             navigate('/');
         } catch (error) {
             console.error("Ошибка при выходе:", error);
@@ -20,7 +20,7 @@ function UserProfile() {
     };
 
     useEffect(() => {
-        api.get('/users/me',{
+        api.get('/api/users/me',{
             withCredentials: true
         })
         .then((response) => {

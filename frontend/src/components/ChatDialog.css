@@ -25,9 +25,12 @@
     font-family: "Nunito";
     font-weight: 500;
     padding: 10px;
+    flex-direction: column;
     border-radius: 12.5px;
     max-width: fit-content;
     display: flex;
+    overflow-wrap: break-word;
+    word-break: break-word;
     align-items: flex-start;
     position: relative;
 }
@@ -52,9 +55,8 @@
     font-size: 0.65rem;
     align-self: flex-end;
     opacity: 0.5;
-    margin-top: -15px;
-    margin-left: 3px;
-    text-align: right;
+    align-self: flex-end;
+    white-space: nowrap; 
 }
 
 .input-area {
@@ -120,3 +122,8 @@
 .custom-button:active {
     transform: scale(0.95);
 }
+
+.messages::-webkit-scrollbar {
+    display: none; /* Скрываем скроллбар в Chrome, Safari */
+}
+

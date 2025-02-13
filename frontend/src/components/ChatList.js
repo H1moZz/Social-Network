@@ -12,7 +12,7 @@ const ChatList = () => {
     useEffect(() => {
         const fetchChats = async () => {
             try {
-                const response = await api.get('/messenger/chats', {
+                const response = await api.get('/api/messenger/chats', {
                     withCredentials: true, 
                 });
                 setChats(response.data);

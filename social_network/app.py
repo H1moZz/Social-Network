@@ -11,11 +11,7 @@ def create_app():
 
     myapp.config.from_object(Config)
 
-    migrate = Migrate(myapp, db)
-
-    CORS(myapp, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True) 
-
-    db.init_app(myapp)
+    Migrate(myapp, db)
 
     from .routes import posts_bp, comments_bp, users_bp, auth_bp, messenger_bp
 
@@ -25,4 +21,9 @@ def create_app():
     myapp.register_blueprint(auth_bp, url_prefix="/api/auth")
     myapp.register_blueprint(messenger_bp, url_prefix='/api/messenger')
 
+    CORS(myapp, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True) 
+
+    db.init_app(myapp)
+
     return myapp
+

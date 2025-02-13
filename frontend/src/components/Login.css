@@ -9,11 +9,15 @@
 .login-card {
     background-color: white;
     padding: 2rem;
+    display: flex;
+    flex-direction: column;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     width: 100%;
     max-width: 400px;
     text-align: center;
+    align-items: center;
+    gap: 1px;
 }
 
 .login-form {
@@ -62,8 +66,9 @@
 }
 
 .message {
-    margin-top: 1rem;
-    color: #ff6b6b;
+    color: #ff0000;
+    margin-top: 1px;
+    margin-bottom: 1px;
     font-weight: bold;
 }
 
@@ -146,4 +151,38 @@
   .cta:active {
     transform: scale(0.95);
   }
+  .register-link {
+    margin-top: 10px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.register-link span {
+    color: #007bff;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.register-link span:hover {
+    text-decoration: underline;
+}
+
+.error-message {
+  position: relative;
+  margin: auto;
+  padding: 12px 18px;
+  border-radius: 50px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: white;
+  background: #ff6b6b;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  transition: background 0.3s ease;
+}
+
   

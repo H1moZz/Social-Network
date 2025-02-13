@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import "./Login.css";
@@ -12,10 +12,11 @@ function Login() {
     useEffect(() => {
         const checkSession = async () => {
             try {
-                const response = await api.get('auth/check_session', {
+                const response = await api.get('api/auth/check_session', {
                     withCredentials: true,
                 });
                 if (response.data.is_authenticated) {
+                    localStorage.setItem("isAuthenticated", "true");
                     navigate('/chats');
                 }
             } catch (error) {
@@ -29,34 +30,30 @@ function Login() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await api.post(
-                "auth/login",
+            await api.post("/api/auth/login",
                 { email, password },
                 {
                     headers: { "Content-Type": "application/json" },
                     withCredentials: true,
                 }
             );
-
-            console.log("Успешный вход", response);
             navigate("/chats"); 
         } catch (error) {
-            console.log(error);
-            setMessage("Ошибка входа: " + (error.response?.data?.message || "Неизвестная ошибка"));
+            setMessage("Ошибка входа: " + (error.response?.data?.error || "Неизвестная ошибка"));
         }
     };
 
     return (
         <div className="login-container">
             <div className="login-card">
-                <h2>Login</h2>
+                <h2>Вход</h2>
                 <form onSubmit={handleSubmit} className="login-form">
                     <div className="input-wrapper">
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Enter your email"
+                            placeholder="Введите свою почту"
                             required
                         />
                     </div>
@@ -65,19 +62,22 @@ function Login() {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Enter your password"
+                            placeholder="Введите свой пароль"
                             required
                         />
                     </div>
+                    {message && <p className="error-message">{message}</p>}
                     <button type="submit" className="cta">
-                        <span>Login</span>
+                        <span>Войти</span>
                         <svg width="15px" height="10px" viewBox="0 0 13 10">
                             <path d="M1,5 L11,5"></path>
                             <polyline points="8 1 12 5 8 9"></polyline>
                         </svg>
                     </button>
                 </form>
-                {message && <p className="error-message">{message}</p>}
+                <p className="register-link">
+                    Еще нет аккаунта? <span onClick={() => navigate("/register")}>Зарегистрироваться</span>
+                </p>
             </div>
         </div>
     );

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'https://social-network-h0kc.onrender.com/api',
+    baseURL: 'http://192.168.3.88:3001',
     withCredentials: true,
 });
 
