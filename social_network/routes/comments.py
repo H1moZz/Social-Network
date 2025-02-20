@@ -11,7 +11,7 @@ comments_api = Api(comments_bp)
 
 class CommentsListResource(AuthenticatedResource):
     def get(self, post_id):
-        comments = Comment.query.filter_by(post_id=post_id).all()
+            
         return [
             {"id": comment.id, "content": comment.content, "author_id": comment.author_id}
             for comment in comments

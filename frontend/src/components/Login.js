@@ -36,7 +36,7 @@ function Login() {
                     headers: { "Content-Type": "application/json" },
                     withCredentials: true,
                 }
-            );
+            )
             navigate("/chats"); 
         } catch (error) {
             setMessage("Ошибка входа: " + (error.response?.data?.error || "Неизвестная ошибка"));

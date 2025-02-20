@@ -6,10 +6,10 @@ from flask_migrate import Migrate
 
 db = SQLAlchemy()
 
-def create_app():
+def create_app(config_object=Config):
     myapp = Flask(__name__)
 
-    myapp.config.from_object(Config)
+    myapp.config.from_object(config_object)
 
     Migrate(myapp, db)
 
@@ -26,4 +26,3 @@ def create_app():
     db.init_app(myapp)
 
     return myapp
-

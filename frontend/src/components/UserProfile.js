@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { useNavigate } from 'react-router-dom';
 import './UserProfile.css';
+import socket from './webSocket';
 
 function UserProfile() {
     const [user, setUser] = useState(null);
@@ -13,6 +14,7 @@ function UserProfile() {
         try {
             await api.post('/api/auth/logout', { withCredentials: true });
             localStorage.clear();
+            socket.disconnect();
             navigate('/');
         } catch (error) {
             console.error("Ошибка при выходе:", error);

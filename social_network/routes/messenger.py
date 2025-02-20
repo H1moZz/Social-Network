@@ -42,6 +42,7 @@ class ChatListResource(AuthenticatedResource):
         chat = Chat.get_or_create_personal_chat(current_user_id, participant.id)
         db.session.add(chat)
         db.session.commit()
+        print(chat.id)
 
         return {'id': chat.id}, 201
 
@@ -50,14 +51,11 @@ class MessageListResource(AuthenticatedResource):
         current_user_id = request.user_id
         chat = Chat.query.get_or_404(chat_id)
 
-        # Проверка, что текущий пользователь является участником чата
         if current_user_id not in [user.id for user in chat.participants]:
             return {'error': 'Вы не в этом чате'}, 403
 
-        # Получаем параметр before (если он есть)
         before = request.args.get('before', type=int)
 
-        # Если параметр before не передан, загружаем последние 30 сообщений
         if before:
             messages = Message.query.filter_by(chat_id=chat_id) \
                 .filter(Message.id < before) \
@@ -65,20 +63,18 @@ class MessageListResource(AuthenticatedResource):
                 .limit(30) \
                 .all()
         else:
-            # Без параметра before, загружаем последние 30 сообщений
             messages = Message.query.filter_by(chat_id=chat_id) \
                 .order_by(Message.timestamp.desc()) \
                 .limit(30) \
                 .all()
 
-        # Преобразуем список сообщений в формат JSON
         return jsonify([{
             'id': msg.id,
             'content': msg.content,
             'sender_id': msg.sender_id,
             'timestamp': msg.timestamp.isoformat(),
             'is_read': msg.is_read
-        } for msg in reversed(messages)])  # Переворачиваем, чтобы последние были снизу
+        } for msg in reversed(messages)])
 
 
     def post(self, chat_id):

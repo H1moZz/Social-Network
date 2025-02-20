@@ -1,4 +1,4 @@
-from flask import Blueprint, request, make_response
+from flask import Blueprint, request, make_response, jsonify
 from flask_restful import Api, Resource, reqparse
 from flask_cors import CORS
 from social_network.app import db
@@ -70,7 +70,7 @@ class  CheckSessionResource(AuthenticatedResource):
     def get(self):
         user = User.query.get(request.user_id)
         if not user:
-            return {'is_authenticated': False}, 200
+            return {'is_authenticated': False}, 401
 
         return {
             'is_authenticated': True,

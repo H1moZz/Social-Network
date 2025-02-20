@@ -10,7 +10,7 @@ class AuthenticatedResource(Resource):
         print(request.cookies.get('session_token'))
         session = Session.query.filter_by(session_token=session_token).first()
         if not session or session.expires_at < datetime.today():
-            return {'error': 'Ну что за'}, 401
+            return {'is_authenticated': False}, 401
 
         request.user_id = session.user_id
 

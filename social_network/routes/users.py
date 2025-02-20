@@ -16,8 +16,8 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 class UserListResource(AuthenticatedResource):
     def get(self):
-        users = User.query.filter((User.is_deleted == False) | (User.is_deleted == None)).all()
-        return [{"id": user.id, "username": user.username, "email": user.email} for user in users], 200
+        users = User.query.filter(((User.is_deleted == False) | (User.is_deleted == None )) & (User.id != request.user_id)).all()
+        return [{"id": user.id, "username": user.username, "email": user.email, "avatar": user.avatar} for user in users], 200
 
 class UserResource(AuthenticatedResource):
     def get(self, id):
@@ -97,7 +97,7 @@ class UserUploadAvatar(AuthenticatedResource):
         file = request.files['avatar']
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            filepath = os.path.join(current_app.static_folder, UPLOAD_FOLDER, filename)  # Исправили путь
+            filepath = os.path.join(current_app.static_folder, UPLOAD_FOLDER, filename)
             file.save(filepath)
             
             user = User.query.get(current_user_id)

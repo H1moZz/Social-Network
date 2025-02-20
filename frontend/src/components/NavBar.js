@@ -20,6 +20,13 @@ const Navbar = () => {
           </NavLink>
         </button>
       </li>
+      <li>
+        <button className="navbar-button">
+          <NavLink to="/users" activeClassName="active">
+            <span className="icon">👥</span>
+          </NavLink>
+        </button>
+      </li>
       {/* Добавь другие кнопки по аналогии */}
     </nav>
   );

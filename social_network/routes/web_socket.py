@@ -1,6 +1,6 @@
 from flask_socketio import SocketIO, emit, join_room
 from flask import request, jsonify
-from social_network.models import Message, Session
+from social_network.models import Message, Session, User
 from social_network.app import db
 from datetime import datetime
 from flask_cors import CORS
@@ -19,6 +19,7 @@ def auntificate_websocket():
         return False
 
     request.user_id = session.user_id
+    print("АЙДИ ПОЛЬЗОВАТЕЛЯ: ",session.user_id)
     emit('user_connected', {'user_id': request.user_id}, room=request.sid)
     return True
 
@@ -35,10 +36,12 @@ def handle_join(data):
         print("Присоединение к чату отклонено: ошибка аутентификации")
         return False
     chat_id=data["chat_id"]
+    print(f"Пользователь  в руме {chat_id}")
     join_room(str(chat_id))
 
 @socketio.on('send_message')
 def handle_message(data):
+    sender = User.query.get(data["user_id"])
     new_message = Message(
         content=data['content'],
         sender_id=data["user_id"],
@@ -48,10 +51,13 @@ def handle_message(data):
     
     db.session.add(new_message)
     db.session.commit()
+
+    print(f"📩 Отправка нового сообщения в чат {data['chat_id']}")
+    print(f"📩 Отправка нового сообщения в чат от {sender.username}")
     
-    emit('new_message', {
+    emit('new_message_sended', {
         'id': new_message.id,
         'content': new_message.content,
         'sender_id': new_message.sender_id,
-        'timestamp': new_message.timestamp.isoformat()
-    }, room=str(data['chat_id']))
+        'sender_name':sender.username,
+        'timestamp': new_message.timestamp.isoformat()}, room=str(data['chat_id'])), 200

@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import io from 'socket.io-client';
 import api from '../api';
 import { useParams } from 'react-router-dom';
 import './ChatDialog.css';
+import socket from './webSocket';
 
 const ChatDialog = () => {
     const [message, setMessage] = useState('');
     const chatId = useParams();
     const [messages, setMessages] = useState([]);
-    const socketRef = useRef();
     const [userId, setUserId] = useState(null);
     const [loading, setLoading] = useState(false);
     const [isScrolledToBottom, setIsScrolledToBottom] = useState(true); // Стейт для проверки, внизу ли мы
@@ -104,28 +103,29 @@ const ChatDialog = () => {
     };
 
     useEffect(() => {
-        socketRef.current = io(api.getUri(), {
-            transports: ['websocket'],
+        // Подключаем сокет только если он еще не подключен
+        if (!socket.connected) {
+            socket.connect();
+        }
+    
+        socket.on('user_connected', (data) => {
+            setUserId(data.user_id);
         });
-        socketRef.current.on('user_connected', (data) => {
-            if (!userId) {
-                setUserId(data.user_id);
-            }
-        });
-        socketRef.current.emit('join_chat', {
-            chat_id: chatId["chatId"],
-        });
-
+    
+        socket.emit('join_chat', { chat_id: chatId["chatId"] });
+    
         loadHistory();
-
-        socketRef.current.on('new_message', (msg) => {
+        
+        
+        socket.on('new_message_sended', (msg) => {
             setMessages((prev) => [...prev, msg]);
         });
-
+    
         return () => {
-            socketRef.current.disconnect();
+            socket.off('user_connected');
+            socket.off('new_message_sended');
         };
-    }, [chatId["chatId"]]);
+    }, [chatId["chatId"]]); 
 
     // Проверка и прокрутка вниз, если нужно
     useEffect(() => {
@@ -144,9 +144,8 @@ const ChatDialog = () => {
     }, [messages]); 
 
     const sendMessage = () => {
-        if (message.trim()) {
-            if (socketRef.current) {
-                socketRef.current.emit('send_message', {
+        if (message.trim() && socket.connected) {
+                socket.emit('send_message', {
                     content: message,
                     chat_id: chatId["chatId"],
                     user_id: userId,
@@ -155,9 +154,8 @@ const ChatDialog = () => {
                 setTimeout(() => {
                     scrollToBottom();
                 }, 100);
-            } else {
+            }else {
                 console.error('Socket not connected.');
-            }
         }
     };
 
