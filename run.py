@@ -5,4 +5,4 @@ myapp = create_app()
 socketio.init_app(myapp, cors_allowed_origins="*")
 
 if __name__ == "__main__":
-    socketio.run(myapp, debug=True, host='localhost', port=3001)
+    socketio.run(myapp, host="0.0.0.0", port=3001, allow_unsafe_werkzeug=True)

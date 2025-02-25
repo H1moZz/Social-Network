@@ -1,5 +1,9 @@
 __pycache__/
 
-addusers.py
+map_test.py
 
 .pytest_cache
+
+cert.pem
+
+key.pem
