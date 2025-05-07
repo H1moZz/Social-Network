@@ -4,12 +4,13 @@
   "proxy": "http://192.168.3.88:3000",
   "private": true,
   "dependencies": {
-    "cra-template": "1.2.0",
     "axios": "^1.5.0",
+    "cra-template": "1.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.1",
     "react-scripts": "5.0.1",
+    "react-window": "^1.8.11",
     "socket.io-client": "^4.8.1"
   },
   "scripts": {

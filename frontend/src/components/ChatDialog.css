@@ -1,16 +1,31 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Triodion&display=swap');
 
+body {
+    overflow: hidden;
+    height: 100vh; /* фиксируем высоту, чтобы не было прокрутки */
+  }
+
 .chat-container {
     width: 600px;
-    margin: 0 auto;
-    height: 100vh;
+    margin: 62px auto;
+    height: 90vh;
     display: flex;
-    padding-top: 20px;
+    padding-top: 50px;
     flex-direction: column;
     background-color: #333333;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    overflow-y: hidden;
+}
+
+.hide-scrollbar {
+    scrollbar-width: none;     /* Firefox */
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+}
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari и др. */
 }
 
 .messages {
@@ -24,37 +39,44 @@
     margin: 10px 0;
     font-family: "Nunito";
     font-weight: 500;
-    padding: 10px;
-    flex-direction: column;
+    padding: 8px 12px;
     border-radius: 12.5px;
-    max-width: fit-content;
+    max-width: 70%;
     display: flex;
-    overflow-wrap: break-word;
-    word-break: break-word;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 4px;
     position: relative;
 }
 
 .message.own {
     margin-left: auto;
+    max-width: fit-content;
     background-color: #007bff;
     color: white;
 }
 
 .message.other {
     margin-right: auto;
+    max-width: fit-content;
     background-color: #3f3f3f;
     color: rgb(255, 255, 255);
 }
 
 .message .content {
     word-wrap: break-word;
+    word-break: break-word;
+    margin-right: 4px;
+    margin-bottom: -2px;
+    flex: 1;
+    min-width: 0;
 }
 
 .message .time {
     font-size: 0.65rem;
     align-self: flex-end;
-    opacity: 0.5;
+    opacity: 0.8;
+    color: #ffffff;
     align-self: flex-end;
     white-space: nowrap; 
 }
@@ -125,5 +147,101 @@
 
 .messages::-webkit-scrollbar {
     display: none; /* Скрываем скроллбар в Chrome, Safari */
+}
+
+.message-footer {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    font-size: 0.65rem;
+    opacity: 0.7;
+    white-space: nowrap;
+    margin-left: auto;
+    flex-shrink: 0;
+    padding-bottom: 1px;
+}
+
+.read-status {
+    font-size: 0.7rem;
+    color: rgb(255, 255, 255) !important;
+}
+
+.message.own .read-status {
+    color: #fff !important;
+}
+
+.message-actions {
+    display: none;
+    position: absolute;
+    right: -30px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.message:hover .message-actions {
+    display: flex;
+}
+
+.edit-button {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 16px;
+    transition: color 0.2s;
+}
+
+.edit-button:hover {
+    color: #007bff;
+}
+
+.edited-mark {
+    font-size: 0.7rem;
+    color: #ffffff;
+    margin-left: 4px;
+}
+
+.cancel-button {
+    padding: 8px 16px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+    background-color: #5a6268;
+}
+
+.context-menu {
+    position: fixed;
+    background: #424242;
+    border-radius: 8px;
+    padding: 8px 0;
+    min-width: 150px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+.context-menu-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    transition: background-color 0.2s;
+}
+
+.context-menu-item:hover {
+    background-color: #505050;
+}
+
+.context-menu-item i {
+    font-size: 14px;
+    opacity: 0.7;
 }
 

@@ -49,6 +49,7 @@ class Message(db.Model):
     chat_id = db.Column(db.Integer, db.ForeignKey('chat.id'), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.today())
     is_read = db.Column(db.Boolean, default=False)
+    edited = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return f"<Message {self.id}>"
