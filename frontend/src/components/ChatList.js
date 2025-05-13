@@ -195,7 +195,7 @@ const ChatList = () => {
                         <div className="chat-avatar">
                             {chat.participant.avatar ? (
                                 <img 
-                                    src={`/static/pf_photos/${chat.participant.avatar}`} 
+                                    src={`http://192.168.3.88:3001/static/pf_photos/${chat.participant.avatar}`} 
                                     alt={chat.participant.username} 
                                 />
                             ) : (
@@ -208,11 +208,6 @@ const ChatList = () => {
                             <div className="chat-header">
                                 <div className="chat-header-left">
                                     <span className="username">{chat.participant.username}</span>
-                                    {chat.id !== parseInt(chatId) && chat.unread_count > 0 && (
-                                        <div className="unread-badge">
-                                            {chat.unread_count}
-                                        </div>
-                                    )}
                                 </div>
                                 {chat.last_message && (
                                     <span className="time">
@@ -231,6 +226,11 @@ const ChatList = () => {
                                 )}
                             </div>
                         </div>
+                        {chat.id !== parseInt(chatId) && chat.unread_count > 0 && (
+                            <div className="unread-badge">
+                                {chat.unread_count}
+                            </div>
+                        )}
                     </div>
                 ))
             )}

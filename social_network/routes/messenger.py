@@ -1,10 +1,13 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from flask_restful import Api, reqparse
 from flask_cors import CORS
 from social_network.app import db
 from social_network.models import Chat, Message, User
 from social_network.routes.AuntResource import AuthenticatedResource
 from social_network.routes.web_socket import socketio
+from datetime import datetime
+import os
+from werkzeug.utils import secure_filename
 
 messenger_bp = Blueprint('messenger', __name__)
 CORS(messenger_bp, supports_credentials=True, resources={r"/api/*": {"origins": "*"}})
@@ -21,6 +24,11 @@ message_parser.add_argument('content', type=str, required=True)
 # Парсер для редактирования сообщения
 message_edit_parser = reqparse.RequestParser()
 message_edit_parser.add_argument('content', type=str, required=True)
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 class ChatListResource(AuthenticatedResource): 
     def get(self):
@@ -139,6 +147,8 @@ class MessageListResource(AuthenticatedResource):
             'messages': [{
                 'message_id': msg.id,
                 'content': msg.content,
+                'media_path': msg.media_path,
+                'media_type': msg.media_type,
                 'sender_id': msg.sender_id,
                 'timestamp': msg.timestamp.isoformat(),
                 'is_read': msg.is_read
@@ -155,14 +165,43 @@ class MessageListResource(AuthenticatedResource):
         if current_user_id not in [user.id for user in chat.participants]:
             return {'error': 'Вы не в этом чате'}, 403
 
-        args = message_parser.parse_args()
+        content = request.form.get('content', '')
+        file = request.files.get('media')
+
+        media_path = None
+        media_type = None
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            ext = filename.rsplit('.', 1)[1].lower()
+
+            media_type = 'image' if ext in {'png', 'jpg', 'jpeg', 'gif'} else 'video'
+
+            folder = os.path.join(current_app.static_folder, 'media')
+            os.makedirs(folder, exist_ok=True)
+
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
+            filename = f"{current_user_id}_{timestamp}_{filename}"
+            filepath = os.path.join(folder, filename)
+
+            file.save(filepath)
+
+            media_path = f"/static/media/{filename}"
+
+        if not content and not media_path:
+            return {'error': 'Пустое сообщение'}, 400
+
         message = Message(
-            content=args['content'],
+            content=content,
             sender_id=current_user_id,
-            chat_id=chat_id
+            chat_id=chat_id,
+            media_path=media_path,
+            media_type=media_type
         )
+
         db.session.add(message)
         db.session.commit()
+         
 
         message_data = {
             'message_id': message.id,
@@ -170,17 +209,17 @@ class MessageListResource(AuthenticatedResource):
             'sender_id': current_user_id,
             'chat_id': chat_id,
             'timestamp': message.timestamp.isoformat(),
-            'is_read': False
+            'is_read': False,
+            'media_path': media_path,
+            'media_type': media_type
         }
-        
-        print(f"Sending new_message_sended to room {chat_id}")
+
+        print("message_data", message_data)
+
         socketio.emit('new_message_sended', message_data, room=str(chat_id))
-        
-        print("ДАЛЕЕ")
+
         for participant in chat.participants:
-            print(participant.id + "-------")
             if participant.id != current_user_id:
-                print(f"Sending chat_updated to user_{participant.id}")
                 socketio.emit('chat_updated', message_data, room=f'user_{participant.id}')
 
         return {'message_id': message.id}, 201

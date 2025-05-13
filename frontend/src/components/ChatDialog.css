@@ -252,22 +252,237 @@ body {
 /* Медиа-запрос для маленьких экранов */
 @media screen and (max-width: 768px) {
     .chat-wrapper {
-        height: calc(100vh - 20px); /* Меньше отступ на мобильных */
-        border-radius: 0; /* Убираем скругление на мобильных */
+        height: calc(100vh - 20px);
+        margin: 10px;
+        width: auto;
     }
 
-    .input-area {
-        padding: 8px; /* Меньше padding на мобильных */
-        min-height: 50px; /* Меньше высота на мобильных */
-    }
-
-    .custom-button {
-        padding: 6px 12px; /* Меньше padding для кнопки */
-        font-size: 14px; /* Меньше шрифт */
+    .messages {
+        padding: 10px;
     }
 
     .message {
-        max-width: 85%; /* Увеличиваем максимальную ширину сообщений на мобильных */
+        max-width: 85%;
+        padding: 6px 10px;
     }
+
+    .input-area {
+        min-height: 50px;
+        padding: 8px;
+    }
+
+    .custom-button {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+
+    .context-menu {
+        position: fixed;
+        bottom: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 300px;
+    }
+}
+
+/* Для мобильных (до 480px) */
+@media screen and (max-width: 480px) {
+    .chat-wrapper {
+        height: 100vh;
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .messages {
+        padding: 8px;
+    }
+
+    .message {
+        max-width: 90%;
+        padding: 6px 8px;
+        font-size: 14px;
+    }
+
+    .message .time {
+        font-size: 0.6rem;
+    }
+
+    .input-area {
+        min-height: 45px;
+        padding: 6px;
+        gap: 6px;
+    }
+
+    .input-area input {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    .custom-button {
+        padding: 6px 10px;
+        font-size: 13px;
+        min-width: 60px;
+    }
+
+    .cancel-button {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+
+    .context-menu {
+        bottom: 50px;
+    }
+
+    .context-menu-item {
+        padding: 10px;
+        font-size: 14px;
+    }
+}
+
+/* Для очень маленьких экранов (до 320px) */
+@media screen and (max-width: 320px) {
+    .message {
+        max-width: 95%;
+        font-size: 13px;
+    }
+
+    .input-area {
+        padding: 4px;
+        gap: 4px;
+    }
+
+    .custom-button {
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+}
+
+/* Стили для медиа контента в сообщениях */
+.message-media {
+    margin-top: 8px;
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: 100%;
+}
+
+.media-image {
+    max-width: 250px;
+    max-height: 200px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.media-image:hover {
+    opacity: 0.9;
+}
+
+.media-video {
+    max-width: 250px;
+    max-height: 200px;
+    border-radius: 8px;
+}
+
+/* Стили для превью выбранного медиа */
+.media-preview-container {
+    background-color: #444444;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 0 10px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.media-preview-image, 
+.media-preview-video {
+    max-width: 150px;
+    max-height: 150px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.remove-media-button {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background-color: #e53e3e;
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.2s;
+}
+
+.remove-media-button:hover {
+    background-color: #c53030;
+}
+
+/* Стили для кнопки загрузки медиа */
+.media-button {
+    background: none;
+    border: none;
+    color: #8E8E93;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0 10px;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.media-button:hover {
+    color: #FFFFFF;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 480px) {
+    .media-image, 
+    .media-video {
+        max-width: 200px;
+        max-height: 150px;
+    }
+    
+    .media-preview-image, 
+    .media-preview-video {
+        max-width: 100px;
+        max-height: 100px;
+    }
+    
+    .media-button {
+        font-size: 20px;
+        padding: 0 8px;
+    }
+}
+
+.no-messages {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: #8E8E93;
+    font-size: 16px;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: #8E8E93;
+    font-style: italic;
 }
 

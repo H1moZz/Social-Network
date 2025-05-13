@@ -103,6 +103,7 @@ def handle_message_read(data):
     print(f"📩 СОБЩЕНИЕ ЧИТАЕМ {data['chat_id']}")
     message = Message.query.get(int(message_id))
     if message and message.sender_id != reader_id:
+        print("хуня")
         message.is_read = True
         db.session.commit()
         

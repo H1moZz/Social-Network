@@ -44,7 +44,9 @@ chat_participants = db.Table('chat_participants',
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.Text, nullable=False)
+    content = db.Column(db.Text, nullable=True)
+    media_type = db.Column(db.String(20), nullable=True)
+    media_path = db.Column(db.String(200), nullable=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     chat_id = db.Column(db.Integer, db.ForeignKey('chat.id'), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.today())
