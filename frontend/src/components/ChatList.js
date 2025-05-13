@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 import './ChatList.css';
 import socket from './webSocket';
 
 const ChatList = () => {
     const navigate = useNavigate();
+    const { chatId } = useParams();
     const [chats, setChats] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -91,11 +92,24 @@ const ChatList = () => {
             console.log('Message status updated:', data);
             setChats(prevChats => {
                 return prevChats.map(chat => {
+                    console.log("chat.id", chat.id, "data.chat_id", data.chat_id)
                     if (chat.id === data.chat_id) {
-                        return {
+                        // Обновляем статус прочтения последнего сообщения
+                        const updatedChat = {
                             ...chat,
-                            unread_count: Math.max(0, chat.unread_count - 1)
+                            last_message: chat.last_message && {
+                                ...chat.last_message,
+                                is_read: data.is_read
+                            }
                         };
+
+                        // Если сообщение прочитано, уменьшаем счетчик непрочитанных
+                        if (data.is_read) {
+                            updatedChat.unread_count = Math.max(0, chat.unread_count - 1);
+                        }
+
+                        console.log('Обновляем чат:', chat.id, 'Новый статус:', updatedChat);
+                        return updatedChat;
                     }
                     return chat;
                 });
@@ -114,11 +128,14 @@ const ChatList = () => {
                                 content: data.content,
                                 timestamp: data.timestamp,
                                 sender_id: data.sender_id,
-                                is_read: false
+                                is_read: data.sender_id === userId || chat.id === parseInt(chatId) // Сразу помечаем как прочитанное, если это наше сообщение или открыт этот чат
                             }
                         };
 
-                        if (data.sender_id !== userId) {
+                        // Увеличиваем счетчик непрочитанных только если:
+                        // 1. Сообщение не от текущего пользователя
+                        // 2. Чат не открыт в данный момент
+                        if (data.sender_id !== userId && chat.id !== parseInt(chatId)) {
                             newChat.unread_count = (chat.unread_count || 0) + 1;
                         }
 
@@ -149,7 +166,7 @@ const ChatList = () => {
             socket.off('new_message_sended');
             socket.off('chat_updated');
         };
-    }, [userId]);
+    }, [userId, chatId]);
 
     const formatTime = (timestamp) => {
         if (!timestamp) return '';
@@ -172,7 +189,7 @@ const ChatList = () => {
                 chats.map((chat) => (
                     <div 
                         key={chat.id} 
-                        className="chat-item" 
+                        className={`chat-item ${chat.id === parseInt(chatId) ? 'active' : ''}`} 
                         onClick={() => handleChatClick(chat.id)}
                     >
                         <div className="chat-avatar">
@@ -191,7 +208,7 @@ const ChatList = () => {
                             <div className="chat-header">
                                 <div className="chat-header-left">
                                     <span className="username">{chat.participant.username}</span>
-                                    {chat.unread_count > 0 && (
+                                    {chat.id !== parseInt(chatId) && chat.unread_count > 0 && (
                                         <div className="unread-badge">
                                             {chat.unread_count}
                                         </div>

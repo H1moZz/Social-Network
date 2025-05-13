@@ -117,6 +117,7 @@ class MessageListResource(AuthenticatedResource):
         for message in unread_messages:
             socketio.emit('message_status_updated', {
                 'message_id': message.id,
+                'chat_id': chat_id,
                 'is_read': True
             }, room=str(chat_id))
 
@@ -136,7 +137,7 @@ class MessageListResource(AuthenticatedResource):
 
         return jsonify({
             'messages': [{
-                'id': msg.id,
+                'message_id': msg.id,
                 'content': msg.content,
                 'sender_id': msg.sender_id,
                 'timestamp': msg.timestamp.isoformat(),
@@ -182,7 +183,7 @@ class MessageListResource(AuthenticatedResource):
                 print(f"Sending chat_updated to user_{participant.id}")
                 socketio.emit('chat_updated', message_data, room=f'user_{participant.id}')
 
-        return {'id': message.id}, 201
+        return {'message_id': message.id}, 201
 
 class MessageResource(AuthenticatedResource):
     def put(self, chat_id, message_id):
@@ -202,10 +203,12 @@ class MessageResource(AuthenticatedResource):
         message.edited = True  # Добавим флаг, что сообщение было отредактировано
         
         db.session.commit()
+        print("message.chat_id", message.chat_id)
         
         # Отправляем уведомление через WebSocket
         socketio.emit('message_edited', {
             'message_id': message.id,
+            'chat_id': message.chat_id,
             'content': message.content,
             'edited': True
         }, room=str(chat_id))
@@ -226,7 +229,7 @@ class MessageResource(AuthenticatedResource):
             }, room=str(chat_id))
         
         return {
-            'id': message.id,
+            'message_id': message.id,
             'content': message.content,
             'edited': True
         }

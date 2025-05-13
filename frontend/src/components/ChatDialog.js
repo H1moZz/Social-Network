@@ -52,13 +52,24 @@ const ChatDialog = () => {
             const res = await api.get(`/api/messenger/chats/${chatId["chatId"]}/messages`, {
                 withCredentials: true,
             });
-            console.log('Ответ от сервера:', res.data); // Отладочная информация
+            console.log('Загруженные сообщения:', res.data.messages);
             
             if (!Array.isArray(res.data.messages)) {
                 console.error('Неверный формат данных:', res.data);
                 setMessages([]);
                 return;
             }
+            
+            // Отмечаем все непрочитанные сообщения как прочитанные
+            res.data.messages.forEach(msg => {
+                if (!msg.is_read && msg.sender_id !== userId) {
+                    socket.emit('message_read', {
+                        message_id: msg.message_id,
+                        user_id: userId,
+                        chat_id: chatId["chatId"]
+                    });
+                }
+            });
             
             setMessages(res.data.messages);
             setHasMoreMessages(res.data.meta?.has_more || false);
@@ -81,7 +92,7 @@ const ChatDialog = () => {
         setLoading(true);
     
         try {
-            const oldestMessageId = messages[0]?.id;
+            const oldestMessageId = messages[0]?.message_id;
             const res = await api.get(`/api/messenger/chats/${chatId["chatId"]}/messages`, {
                 params: { 
                     before: oldestMessageId
@@ -92,6 +103,17 @@ const ChatDialog = () => {
             if (!res.data.messages || res.data.messages.length === 0) {
                 setHasMoreMessages(false);
             } else {
+                // Отмечаем все непрочитанные сообщения как прочитанные
+                res.data.messages.forEach(msg => {
+                    if (!msg.is_read && msg.sender_id !== userId) {
+                        socket.emit('message_read', {
+                            message_id: msg.message_id,
+                            user_id: userId,
+                            chat_id: chatId["chatId"]
+                        });
+                    }
+                });
+
                 setMessages((prevMessages) => [...res.data.messages, ...prevMessages]);
                 setHasMoreMessages(res.data.meta.has_more);
             }
@@ -101,7 +123,6 @@ const ChatDialog = () => {
         } finally {
             setLoading(false);
     
-            // Сохраняем позицию скролла
             requestAnimationFrame(() => {
                 const newScrollHeight = container.scrollHeight;
                 container.scrollTop = newScrollHeight - previousScrollHeight;
@@ -124,67 +145,129 @@ const ChatDialog = () => {
         checkIfScrolledToBottom();
     };
 
+    // Основной эффект для подключения к чату
     useEffect(() => {
-        if (!socket.connected) {
-            socket.connect();
-        }
-    
-        socket.on('user_connected', (data) => {
-            setUserId(data.user_id);
-            setIsUserIdLoaded(true);
-        });
-    
-        socket.emit('join_chat', { chat_id: chatId["chatId"] });
-    
+        const connectToChat = () => {
+            console.log('Подключаемся к чату:', chatId["chatId"]);
+            if (!socket.connected) {
+                socket.connect();
+            }
+            socket.emit('join_chat', { chat_id: chatId["chatId"] });
+        };
+
+        const disconnectFromChat = () => {
+            console.log('Отключаемся от чата:', chatId["chatId"]);
+            socket.emit('leave_chat', { chat_id: chatId["chatId"] });
+        };
+
+        connectToChat();
         loadHistory();
-        
-        socket.on('new_message_sended', (msg) => {
-            setMessages((prev) => [...prev, msg]);
-            // Если сообщение не от текущего пользователя, отмечаем его как прочитанное
-            if (msg.sender_id !== userId) {
-                socket.emit('message_read', {
-                    message_id: msg.message_id,
-                    user_id: userId,
-                    chat_id: chatId["chatId"]
+
+        return () => {
+            disconnectFromChat();
+        };
+    }, [chatId["chatId"]]); // Зависимость только от ID чата
+
+    // Отдельный эффект для обработчиков событий сокета
+    useEffect(() => {
+        const handleNewMessage = (msg) => {
+            console.log('Получено новое сообщение:', msg);
+            const currentChatId = String(chatId["chatId"]);
+            const messageChatId = String(msg.chat_id);
+
+            if (!msg || !msg.chat_id) {
+                console.error('Некорректное сообщение:', msg);
+                return;
+            }
+
+            if (messageChatId === currentChatId) {
+                console.log('Добавляем сообщение в текущий чат');
+                setMessages(prev => {
+                    const messageExists = prev.some(existingMsg => 
+                        String(existingMsg.message_id) === String(msg.message_id)
+                    );
+                    
+                    if (messageExists) {
+                        return prev;
+                    }
+                    
+                    if (msg.sender_id !== userId) {
+                        socket.emit('message_read', {
+                            message_id: msg.message_id,
+                            user_id: userId,
+                            chat_id: currentChatId
+                        });
+                    }
+                    
+                    return [...prev, msg];
+                });
+
+                if (isScrolledToBottom) {
+                    setTimeout(scrollToBottom, 100);
+                }
+            }
+        };
+
+        const handleStatusUpdate = (data) => {
+            console.log('Получено обновление статуса:', data);
+            console.log('Текущие сообщения:', messages);
+            console.log("data.chat_id", data["chat_id"])
+            console.log("chatId['chatId']", chatId["chatId"])
+            if (String(data.chat_id) === String(chatId["chatId"])) {
+                setMessages(prev => {
+                    const updatedMessages = prev.map(msg => {
+                        console.log('Сравниваем:', {
+                            'msg.message_id': msg.message_id,
+                            'data.message_id': data.message_id,
+                            'совпадают': String(msg.message_id) === String(data.message_id)
+                        });
+                        if (String(msg.message_id) === String(data.message_id)) {
+                            console.log('Обновляем статус сообщения:', msg.message_id, 'на:', data.is_read);
+                            return { ...msg, is_read: data.is_read };
+                        }
+                        return msg;
+                    });
+                    console.log('Обновленные сообщения:', updatedMessages);
+                    return updatedMessages;
                 });
             }
-        });
-
-        socket.on('message_status_updated', (data) => {
-            console.log('Получено обновление статуса:', data);
-            setMessages(prev => {
-                console.log('Предыдущие сообщения:', prev);
-                const updated = prev.map(msg => {
-                    console.log('msg.id', msg.message_id, 'data.message_id', data.message_id);
-                    if (msg.message_id === data.message_id) {
-                        console.log('-------------------');
-                        console.log('Обновляем сообщение:', msg.message_id, 'новый статус:', data.is_read, "message", data.content);
-                        return {...msg, is_read: data.is_read};
-                    }
-                    return msg;
-                });
-                console.log('Обновленные сообщения:', updated);
-                return updated;
-            });
-        });
-
-        socket.on('message_edited', (data) => {
-            setMessages(prevMessages => 
-                prevMessages.map(msg => 
-                    msg.id === data.message_id 
-                        ? { ...msg, content: data.content, edited: true }
-                        : msg
-                )
-            );
-        });
-    
-        return () => {
-            socket.off('user_connected');
-            socket.off('new_message_sended');
-            socket.off('message_status_updated');
-            socket.off('message_edited');
         };
-    }, [chatId["chatId"], userId]);
+        const handleMessageEdit = (data) => {
+            console.log('Получено обновление сообщения:', data);
+            if (String(data.chat_id) === String(chatId["chatId"])) {
+                setMessages(prevMessages => 
+                    prevMessages.map(msg => {
+                        if (msg.message_id === data.message_id) {
+                            console.log('Обновляем содержимое сообщения:', msg.message_id);
+                            return {
+                                ...msg,
+                                content: data.content,
+                                edited: true
+                            };
+                        }
+                        return msg;
+                    })
+                );
+            }
+        };
+
+        const handleUserConnect = (data) => {
+            setUserId(data.user_id);
+            setIsUserIdLoaded(true);
+        };
+
+        socket.on('user_connected', handleUserConnect);
+        socket.on('new_message_sended', handleNewMessage);
+        socket.on('message_status_updated', handleStatusUpdate);
+        socket.on('message_edited', handleMessageEdit);
+
+        return () => {
+            socket.off('user_connected', handleUserConnect);
+            socket.off('new_message_sended', handleNewMessage);
+            socket.off('message_status_updated', handleStatusUpdate);
+            socket.off('message_edited', handleMessageEdit);
+        };
+    }, [chatId["chatId"], userId]); // Убрали isScrolledToBottom из зависимостей
 
     // Проверка и прокрутка вниз, если нужно
     useEffect(() => {
@@ -205,15 +288,20 @@ const ChatDialog = () => {
     const sendMessage = () => {
         if (!message.trim() || !socket.connected || editingMessage) return;
         
-        socket.emit('send_message', {
+        const messageData = {
             content: message,
-            chat_id: chatId["chatId"],
+            chat_id: String(chatId["chatId"]), // Преобразуем в строку
             user_id: userId,
-        });
+        };
+        
+        console.log('Отправка сообщения:', messageData);
+        socket.emit('send_message', messageData);
+        
         setMessage('');
-        setTimeout(() => {
-            scrollToBottom();
-        }, 100);
+        
+        if (isScrolledToBottom) {
+            setTimeout(scrollToBottom, 100);
+        }
     };
 
     const handleEdit = (message) => {
@@ -232,9 +320,12 @@ const ChatDialog = () => {
 
         try {
             if (editingMessage) {
-                // Добавим правильные заголовки и credentials
+                console.log('Отправка редактирования:', editingMessage);
+                const messageId = editingMessage.message_id;
+                console.log('Используемый ID для редактирования:', messageId);
+                
                 const response = await api.put(
-                    `/api/messenger/chats/${chatId["chatId"]}/messages/${editingMessage.id}`,
+                    `/api/messenger/chats/${chatId["chatId"]}/messages/${messageId}`,
                     { content: message },
                     {
                         withCredentials: true,
@@ -243,9 +334,15 @@ const ChatDialog = () => {
                         }
                     }
                 );
+
+                socket.emit('message_edited', {
+                    message_id: messageId,
+                    chat_id: chatId["chatId"],
+                    content: message
+                });
+
                 setEditingMessage(null);
             } else {
-                // Отправка нового сообщения
                 console.log('Отправка нового сообщения:', message);
                 sendMessage();
             }
@@ -271,27 +368,38 @@ const ChatDialog = () => {
     const handleContextMenu = (e, msg) => {
         e.preventDefault();
         if (msg.sender_id === userId) {
+            console.log('Сообщение для контекстного меню:', msg);
+            const messageId = msg.message_id;
+            console.log('Используемый ID:', messageId);
             setContextMenu({
                 show: true,
-                x: e.clientX,
-                y: e.clientY,
-                messageId: msg.id
+                x: e.clientX - 360,
+                y: e.clientY - 80,
+                messageId: messageId
             });
         }
     };
 
     // Обработчик выбора действия из меню
     const handleMenuAction = (action) => {
-        const message = messages.find(msg => msg.message_id === contextMenu.messageId);
-        if (!message) return;
+        console.log('Ищем сообщение с ID:', contextMenu.messageId);
+        console.log('Доступные сообщения:', messages);
+        
+        const message = messages.find(msg => String(msg.message_id) === String(contextMenu.messageId));
+        if (!message) {
+            console.log('Сообщение не найдено:', contextMenu.messageId);
+            return;
+        }
 
+        console.log('Найдено сообщение:', message);
+        
         switch (action) {
             case 'edit':
+                console.log('Редактирование сообщения:', message);
                 handleEdit(message);
                 break;
             case 'delete':
-                // Здесь можно добавить функционал удаления
-                console.log('Delete message:', message.id);
+                console.log('Удаление сообщения:', message.message_id);
                 break;
             case 'copy':
                 navigator.clipboard.writeText(message.content);
@@ -312,7 +420,7 @@ const ChatDialog = () => {
                     {isUserIdLoaded ? (
                         messages.map((msg) => (
                             <div
-                                key={msg.message_id}
+                                key={`${msg.message_id}-${msg.is_read}`}
                                 className={`message ${msg.sender_id === userId ? 'own' : 'other'}`}
                                 onContextMenu={(e) => handleContextMenu(e, msg)}
                             >

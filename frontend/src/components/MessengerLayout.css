@@ -1,0 +1,46 @@
+.messenger-layout {
+    display: flex;
+    position: fixed;
+    top: 65px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 1900px;
+    height: calc(100vh - 65px);
+    transition: all 0.3s ease;
+    gap: 10px;
+    padding: 0 20px;
+}
+
+/* Когда чат не открыт, список по центру */
+.chat-list-container {
+    width: 700px;
+    margin: 0 auto;
+    transition: all 0.3s ease;
+}
+
+/* Когда чат открыт, список прижимается к левому краю */
+.chat-opened {
+    justify-content: flex-start;
+}
+
+.chat-opened .chat-list-container {
+    width: 350px;
+    margin: 0 10px;
+    order: 1;
+}
+
+.chat-dialog-container {
+    width: 1200px;
+    opacity: 0;
+    transform: translateX(20px);
+    animation: slideIn 0.3s forwards;
+    order: 2;
+}
+
+@keyframes slideIn {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

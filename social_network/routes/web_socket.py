@@ -108,6 +108,7 @@ def handle_message_read(data):
         
         emit('message_status_updated', {
             'message_id': message_id,
+            "chat_id": message.chat_id,
             'is_read': True
         }, room=str(chat_id))
 
