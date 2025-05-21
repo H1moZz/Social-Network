@@ -461,7 +461,7 @@ const ChatDialog = () => {
         } else {
             // Обычное текстовое сообщение
             const messageData = {
-                content: message,
+                    content: message,
                 chat_id: String(chatId["chatId"]),
                 user_id: userId,
             };
@@ -664,7 +664,7 @@ const ChatDialog = () => {
                             return (
                                 <div
                                     key={`${msg.message_id}-${msg.is_read}`}
-                                    className={`message ${msg.sender_id === userId ? 'own' : 'other'}`}
+                            className={`message ${msg.sender_id === userId ? 'own' : 'other'}`}
                                     onContextMenu={(e) => handleContextMenu(e, msg)}
                                 >
                                     <div className="content">
@@ -703,19 +703,19 @@ const ChatDialog = () => {
                                         )}
                                     </div>
                                     <div className="message-footer">
-                                        <div className="time">
-                                            {new Date(msg.timestamp).toLocaleTimeString([], {
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                            })}
+                            <div className="time">
+                                {new Date(msg.timestamp).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                })}
                                         </div>
                                         {msg.sender_id === userId && (
                                             <div className="read-status">
                                                 {msg.is_read ? '✓✓' : '✓'}
                                             </div>
                                         )}
-                                    </div>
-                                </div>
+                            </div>
+                        </div>
                             );
                         })
                     ) : (
