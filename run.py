@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 from social_network.app import create_app
 from social_network.routes.web_socket import socketio
 
