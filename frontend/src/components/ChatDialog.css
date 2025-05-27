@@ -1,17 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Triodion&display=swap');
 
-body {
-    overflow: hidden;
-    height: 50vh; /* фиксируем высоту, чтобы не было прокрутки */
-    overflow: hidden;
-
-  }
-
 .chat-wrapper {
-    height: calc(100vh - 60px); /* Вместо фиксированной высоты используем высоту окна */
-    width: 100%; /* Полная ширина */
-    max-width: 1200px; /* Максимальная ширина */
-    background-color: #333333;
+    height: calc(100vh - 75px); /* Вместо фиксированной высоты используем высоту окна */
     border-radius: 10px;
     overflow: hidden;
     margin: 0 auto; /* Центрирование */
@@ -21,7 +11,12 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-height: 0; /* Важно для корректной работы flex */
+    min-height: 0;
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center center;
+    background-image: url('../assets/background.jpg');
+    background-color: #161616;
 }
 
 .hide-scrollbar {
@@ -33,8 +28,7 @@ body {
     flex: 1;
     overflow-y: auto;
     padding: 20px;
-    background-color: #333333;
-    min-height: 0; /* Важно для корректной работы flex */
+    min-height: 0;
 }
 
 .message {
@@ -43,33 +37,70 @@ body {
     font-weight: 500;
     padding: 8px 12px;
     border-radius: 12.5px;
-    max-width: 70%;
+    height: fit-content;
     display: flex;
     flex-direction: row;
     align-items: flex-end;
-    gap: 4px;
     position: relative;
 }
 
 .message.own {
     margin-left: auto;
+    margin-right: 20%;
     max-width: fit-content;
-    background-color: #007bff;
+    background-color: #2667ff;
     color: white;
 }
 
 .message.other {
-    margin-right: auto;
+    align-self: flex-start;
+    margin-left: 20%;
     max-width: fit-content;
     background-color: #3f3f3f;
     color: rgb(255, 255, 255);
 }
 
+/* Стили для сообщений только с изображением */
+.message.only-image {
+    padding: 0;
+    background: none;
+    align-self: flex-end;
+}
+
+.message.only-image .content {
+    padding: 0;
+}
+
+.message.only-image .media-image {
+    border-radius: 12px;
+    max-width: 300px;
+    max-height: 400px;
+    object-fit: contain;
+}
+
+.message.only-image .message-footer {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    color: white;
+}
+
+.message.only-image.own .message-footer {
+    right: 4px;
+}
+
+.message.only-image.other .message-footer {
+    left: 4px;
+}
+
 .message .content {
     word-wrap: break-word;
     word-break: break-word;
-    margin-right: 4px;
-    margin-bottom: -2px;
+    margin-bottom: 2px;
     flex: 1;
     min-width: 0;
 }
@@ -78,6 +109,7 @@ body {
     font-size: 0.65rem;
     align-self: flex-end;
     opacity: 0.8;
+    margin-bottom: -10px;
     color: #ffffff;
     align-self: flex-end;
     white-space: nowrap; 
@@ -85,23 +117,37 @@ body {
 
 .input-area {
     display: flex;
-    min-height: 60px; /* Минимальная высота для области ввода */
+    min-height: 60px;
     gap: 10px;
     padding: 10px;
-    background-color: #333333;
-    align-items: center; /* Центрирование элементов по вертикали */
+    align-items: center;
+    justify-content: center;
+    position: relative;
 }
 
 .input-area input {
     flex: 1;
-    padding: 10px;
-    border: 1px solid #2e2e2e;
-    background-color: #4d4d4d;
+    max-width: 600px;
+    padding: 12px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(77, 77, 77, 0.5);
     border-radius: 20px;
     outline: none;
     font-size: 14px;
     color: white;
-    min-width: 0; /* Позволяет инпуту сжиматься */
+    min-width: 0;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+}
+
+.input-area input:focus {
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(77, 77, 77, 0.7);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.input-area input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
 }
 
 .custom-button {
@@ -167,6 +213,7 @@ body {
 
 .read-status {
     font-size: 0.7rem;
+    margin-bottom: -10px;
     color: rgb(255, 255, 255) !important;
 }
 
@@ -290,7 +337,7 @@ body {
 @media screen and (max-width: 480px) {
     .chat-wrapper {
         height: 100vh;
-        margin: 0;
+        margin: 0; /* Убираем margin для полной ширины */
         border-radius: 0;
     }
 
@@ -338,6 +385,20 @@ body {
         padding: 10px;
         font-size: 14px;
     }
+
+    .message-group {
+        margin-right: 0; /* Убираем отрицательный margin для своих групп */
+        margin-left: 0; /* Убираем отрицательный margin для чужих групп */
+        max-width: 90%; /* Адаптивная максимальная ширина для групп */
+    }
+    
+    .message-group .message.own {
+        margin-right: 0;
+    }
+    
+    .message-group .message.other {
+        margin-left: 0;
+    }
 }
 
 /* Для очень маленьких экранов (до 320px) */
@@ -355,6 +416,10 @@ body {
     .custom-button {
         padding: 6px 8px;
         font-size: 12px;
+    }
+    
+    .message-group {
+        max-width: 95%; /* Увеличиваем max-width для очень узких экранов */
     }
 }
 
@@ -484,5 +549,95 @@ body {
     padding: 20px;
     color: #8E8E93;
     font-style: italic;
+}
+
+.message-group {
+    display: flex;
+    flex-direction: column;
+    margin: 10px 0;
+    /* Убираем max-width здесь, чтобы изображение могло определить ширину */
+    /* max-width: 60%; */
+    
+}
+
+.message-group .message.own {
+    margin-right: 20%;
+    max-width: 60%;
+}
+
+.message-group .message.other {
+    align-self: flex-start;
+    margin-left: 20%;
+}
+
+.message-group .message.no-margin {
+    margin-right: 20%;
+    padding: 0px;
+}
+
+.message-group .message.no-margin-top {
+    margin-top: -18px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    width: 100%; /* Текстовая часть занимает 100% ширины своего родителя (message-group) */
+    box-sizing: border-box;
+    padding: 8px 12px;
+}
+
+.message-group .message.no-margin-top .content {
+    width: 100%; /* Контент текста тоже на 100% ширины */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Добавляем стиль для родительского div изображения, чтобы он не растягивался */
+.message-group .message.only-image .content {
+    width: fit-content;
+}
+
+.message-group .message.only-image .content .media-image {
+    display: block;
+    /* width: auto; Изображение использует свою естественную ширину */
+    height: auto; /* Сохраняем пропорции */
+    border-radius: 12px;
+    object-fit: contain;
+    max-width: 400px; /* Максимальная ширина изображения, можно настроить */
+    min-width: 100px; /* Минимальная ширина изображения */
+    width: fit-content; /* Ширина изображения по его содержимому */
+}
+
+.file-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    color: wite;
+    border-radius: 8px;
+    min-width: 200px;
+}
+
+.file-icon {
+    font-size: 24px;
+    min-width: 24px;
+    text-align: center;
+}
+
+.file-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.file-name {
+    font-size: 14px;
+    color: white;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-size {
+    font-size: 12px;
+    color: #ffffff;
 }
 

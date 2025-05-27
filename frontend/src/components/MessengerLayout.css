@@ -1,26 +1,34 @@
+body { /* путь к изображению *//* чтобы изображение покрывало весь фон */
+    background-repeat: no-repeat;
+    background-color: #232323; /* чтобы не повторялось */
+/* выравнивание */
+}
+
+
 .messenger-layout {
     display: flex;
     position: fixed;
-    top: 65px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 1900px;
-    height: calc(100vh - 65px);
+    top: 65px; 
+    left: 0; /* Выравнивание по левому краю */
+    transform: none; /* Убираем трансформацию для центрирования */
+    width: 100%; /* Полная ширина */
+    max-width: 100%; /* Убираем ограничение максимальной ширины */
+    height: calc(100vh - 75px);
     transition: all 0.3s ease;
     gap: 10px;
-    padding: 0 20px;
+    padding: 0 20px; /* Сохраняем горизонтальные отступы для контента */
+    box-sizing: border-box; /* Включаем padding в ширину */
 }
 
-/* Когда чат не открыт, список по центру */
-.chat-list-container {
-    width: 700px;
-    margin: 0 auto;
-    transition: all 0.3s ease;
+/* Когда чат не открыт, центрируем chat-list-container */
+.messenger-layout:not(.chat-opened) .chat-list-container {
+    margin: 0 auto; /* Центрирование */
+    
 }
 
 /* Когда чат открыт, список прижимается к левому краю */
 .chat-opened {
+    
     justify-content: flex-start;
 }
 
@@ -31,16 +39,59 @@
 }
 
 .chat-dialog-container {
-    width: 1200px;
+    flex-grow: 1;
+    overflow: hidden;
+    width: auto; /* Позволяем flex-grow управлять шириной */
     opacity: 0;
     transform: translateX(20px);
     animation: slideIn 0.3s forwards;
     order: 2;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 @keyframes slideIn {
     to {
         opacity: 1;
         transform: translateX(0);
+    }
+}
+
+/* Медиа-запрос для экранов меньше 768px */
+@media (max-width: 768px) {
+    .messenger-layout {
+        padding: 0; /* Убираем горизонтальные отступы на узких экранах */
+        gap: 0; /* Убираем gap на узких экранах */
+    }
+
+    .messenger-layout.chat-opened .chat-list-container {
+        display: none; /* Скрываем список чатов при открытом диалоге на узких экранах */
+    }
+
+    .messenger-layout.chat-opened .chat-dialog-container {
+        width: 100%; /* Диалог занимает всю ширину */
+    }
+
+    .messenger-layout:not(.chat-opened) .chat-list-container {
+        width: 100%; /* Список чатов на всю ширину, если диалог не открыт */
+        border-right: none;
+        margin: 0; /* Убираем margin */
+    }
+}
+
+/* Медиа-запрос для экранов меньше 1000px (из ваших изменений) */
+@media (max-width: 1000px) {
+     /* Убедимся, что стили для 768px не переопределяются неправильно */
+    .messenger-layout.chat-opened .chat-list-container {
+        display: none; /* Скрываем список чатов при открытом диалоге на узких экранах */
+    }
+
+    .messenger-layout.chat-opened .chat-dialog-container {
+        width: 100%; /* Диалог занимает всю ширину */
+    }
+
+    .messenger-layout:not(.chat-opened) .chat-list-container {
+        width: 100%; /* Список чатов на всю ширину, если диалог не открыт */
+        border-right: none;
     }
 }

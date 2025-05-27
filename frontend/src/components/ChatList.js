@@ -11,6 +11,7 @@ const ChatList = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [userId, setUserId] = useState(null);
+    const [onlineUsers, setOnlineUsers] = useState({});
 
     useEffect(() => {
         console.log('Socket connection status:', socket.connected);
@@ -153,6 +154,31 @@ const ChatList = () => {
             });
         });
 
+        // Получаем начальный статус всех пользователей
+        const fetchOnlineStatus = async () => {
+            try {
+                const response = await api.get('/api/messenger/users/online-status', {
+                    withCredentials: true
+                });
+                setOnlineUsers(response.data.online_users);
+            } catch (error) {
+                console.error('Ошибка при получении статусов пользователей:', error);
+            }
+        };
+
+        fetchOnlineStatus();
+
+        // Подписываемся на события изменения статуса пользователей
+        socket.on('user_status_changed', ({ user_id, is_online, last_seen }) => {
+            setOnlineUsers(prev => ({
+                ...prev,
+                [user_id]: {
+                    is_online,
+                    last_seen: last_seen || new Date().toISOString()
+                }
+            }));
+        });
+
         return () => {
             // Отключаемся от комнат при размонтировании
             chats.forEach(chat => {
@@ -165,6 +191,7 @@ const ChatList = () => {
             socket.off('message_status_updated');
             socket.off('new_message_sended');
             socket.off('chat_updated');
+            socket.off('user_status_changed');
         };
     }, [userId, chatId]);
 
@@ -174,9 +201,16 @@ const ChatList = () => {
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
-    const handleChatClick = (chatId) => {
-        navigate(`/chats/${chatId}`);
+    const handleChatClick = (chat) => {
+        navigate(`/chats/${chat.id}`);
+        // Находим полную информацию о чате
+        const selectedChat = chats.find(c => c.id === chat.id);
+        // Сохраняем в localStorage для использования в Header
+        if (selectedChat?.participant) {
+            localStorage.setItem('current_chat', JSON.stringify(selectedChat));
+        }
     };
+
 
     if (loading) return <div className="chat-list">Загрузка...</div>;
     if (error) return <div className="chat-list error">{error}</div>;
@@ -190,18 +224,22 @@ const ChatList = () => {
                     <div 
                         key={chat.id} 
                         className={`chat-item ${chat.id === parseInt(chatId) ? 'active' : ''}`} 
-                        onClick={() => handleChatClick(chat.id)}
+                        onClick={() => handleChatClick(chat)}
                     >
-                        <div className="chat-avatar">
+                        <div className="avatar-container">
                             {chat.participant.avatar ? (
                                 <img 
                                     src={`http://192.168.3.88:3001/static/pf_photos/${chat.participant.avatar}`} 
                                     alt={chat.participant.username} 
+                                    className="avatar"
                                 />
                             ) : (
                                 <div className="default-avatar">
                                     {chat.participant.username[0].toUpperCase()}
                                 </div>
+                            )}
+                            {onlineUsers[chat.participant.id]?.is_online && (
+                                <div className="online-indicator" />
                             )}
                         </div>
                         <div className="chat-info">

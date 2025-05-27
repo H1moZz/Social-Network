@@ -47,6 +47,8 @@ class Message(db.Model):
     content = db.Column(db.Text, nullable=True)
     media_type = db.Column(db.String(20), nullable=True)
     media_path = db.Column(db.String(200), nullable=True)
+    file_name = db.Column(db.String(200), nullable=True)
+    file_size = db.Column(db.Integer, nullable=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     chat_id = db.Column(db.Integer, db.ForeignKey('chat.id'), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.today())
@@ -63,7 +65,8 @@ class User(db.Model):
     password = db.Column(db.String(120), nullable=False)
     avatar = db.Column(db.String(200), nullable=True)
     is_deleted = db.Column(db.Boolean, default=False)
-    posts = db.relationship('Post', backref='author', lazy=True)
+    is_online = db.Column(db.Boolean, default=False)
+    last_seen = db.Column(db.DateTime, default=datetime.today())
 
     def __repr__(self):
         return f"<User> {self.username}"
@@ -72,22 +75,3 @@ class User(db.Model):
         self.username = username
         self.email = email
         self.password = password
-
-class Post(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(120), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    comments = db.relationship('Comment', backref='post', lazy=True)
-
-    def __repr__(self):
-        return f"<Post {self.title}>"
-    
-class Comment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.Text, nullable=False)
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
-
-    def __repr__(self):
-        return f"<Comment {self.id}>"

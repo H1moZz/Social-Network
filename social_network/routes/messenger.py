@@ -25,10 +25,36 @@ message_parser.add_argument('content', type=str, required=True)
 message_edit_parser = reqparse.RequestParser()
 message_edit_parser.add_argument('content', type=str, required=True)
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi'}
+# Расширяем список разрешенных расширений
+ALLOWED_EXTENSIONS = {
+    # Изображения
+    'png', 'jpg', 'jpeg', 'gif',
+    # Видео
+    'mp4', 'mov', 'avi',
+    # Документы
+    'pdf', 'doc', 'docx', 'xls', 'xlsx',
+    # Текстовые файлы
+    'txt', 'csv',
+    # Архивы
+    'zip', 'rar'
+}
 
 def allowed_file(filename):
+    if not filename:
+        return False
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def get_file_type(filename):
+    if not filename or '.' not in filename:
+        return 'document'
+    
+    ext = filename.rsplit('.', 1)[1].lower()
+    if ext in {'png', 'jpg', 'jpeg', 'gif'}:
+        return 'image'
+    elif ext in {'mp4', 'mov', 'avi'}:
+        return 'video'
+    else:
+        return 'document'
 
 class ChatListResource(AuthenticatedResource): 
     def get(self):
@@ -46,7 +72,7 @@ class ChatListResource(AuthenticatedResource):
             
             # Получаем последнее сообщение
             last_message = Message.query.filter_by(chat_id=chat.id)\
-                .order_by(Message.timestamp.desc())\
+                .order_by(Message.id.desc())\
                 .first()
             
             # Получаем количество непрочитанных сообщений
@@ -57,6 +83,19 @@ class ChatListResource(AuthenticatedResource):
 
             print('---------------------------------')
             
+            # Формируем контент последнего сообщения
+            last_message_content = None
+            if last_message:
+                if last_message.media_type:
+                    if last_message.media_type == 'image':
+                        last_message_content = '🖼️ Изображение'
+                    elif last_message.media_type == 'video':
+                        last_message_content = '🎥 Видео'
+                    else:
+                        last_message_content = f'📎 {last_message.file_name or "Файл"}'
+                else:
+                    last_message_content = last_message.content
+            
             chat_info = {
                 'id': chat.id,
                 'participant': {
@@ -65,16 +104,17 @@ class ChatListResource(AuthenticatedResource):
                     'avatar': participant.avatar
                 },
                 'last_message': {
-                    'content': last_message.content if last_message else None,
+                    'content': last_message_content,
                     'timestamp': last_message.timestamp.isoformat() if last_message else None,
                     'is_read': last_message.is_read if last_message else None,
-                    'sender_id': last_message.sender_id if last_message else None
+                    'sender_id': last_message.sender_id if last_message else None,
+                    'media_type': last_message.media_type if last_message else None
                 } if last_message else None,
                 'unread_count': unread_count
             }
             chat_list.append(chat_info)
 
-            print("СЮДА СМТОРИ", chat_info['unread_count'])
+            print("СЮДА СМОТРИ", chat_info['unread_count'])
             
         # Сортируем чаты по времени последнего сообщения
         chat_list.sort(
@@ -94,11 +134,15 @@ class ChatListResource(AuthenticatedResource):
             return {'error': 'Такого пользователя не существует'}, 404
         
         chat = Chat.get_or_create_personal_chat(current_user_id, participant.id)
-        db.session.add(chat)
-        db.session.commit()
+        
         print(chat.id)
+        participant = next((p for p in chat.participants if p.id != current_user_id), None)
+        print("werfghjkbvcvbnm",)
 
-        return {'id': chat.id}, 201
+        return {'id': chat.id,
+                'participant': {
+                'avatar': participant.avatar,
+                'username': participant.username}},201
 
 class MessageListResource(AuthenticatedResource):
     def get(self, chat_id):
@@ -134,12 +178,12 @@ class MessageListResource(AuthenticatedResource):
         if before:
             messages = Message.query.filter_by(chat_id=chat_id) \
                 .filter(Message.id < before) \
-                .order_by(Message.timestamp.desc()) \
+                .order_by(Message.id.desc(), Message.id.desc()) \
                 .limit(30) \
                 .all()
         else:
             messages = Message.query.filter_by(chat_id=chat_id) \
-                .order_by(Message.timestamp.desc()) \
+                .order_by(Message.id.desc(), Message.id.desc()) \
                 .limit(30) \
                 .all()
 
@@ -149,9 +193,12 @@ class MessageListResource(AuthenticatedResource):
                 'content': msg.content,
                 'media_path': msg.media_path,
                 'media_type': msg.media_type,
+                'file_name': msg.file_name,
+                'file_size': msg.file_size,
                 'sender_id': msg.sender_id,
                 'timestamp': msg.timestamp.isoformat(),
-                'is_read': msg.is_read
+                'is_read': msg.is_read,
+                'edited': msg.edited
             } for msg in reversed(messages)],
             'meta': {
                 'has_more': len(messages) == 30
@@ -170,18 +217,28 @@ class MessageListResource(AuthenticatedResource):
 
         media_path = None
         media_type = None
+        file_name = None
+        file_size = None
 
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            ext = filename.rsplit('.', 1)[1].lower()
+            # Сохраняем оригинальное имя файла
+            file_name = file.filename
+            file_size = os.fstat(file.fileno()).st_size
 
-            media_type = 'image' if ext in {'png', 'jpg', 'jpeg', 'gif'} else 'video'
+            # Проверяем размер файла (50MB)
+            if file_size > 50 * 1024 * 1024:
+                return {'error': 'Файл слишком большой. Максимальный размер: 50МБ'}, 400
+
+            media_type = get_file_type(file.filename)
 
             folder = os.path.join(current_app.static_folder, 'media')
             os.makedirs(folder, exist_ok=True)
 
+            # Получаем расширение файла
+            file_ext = os.path.splitext(file.filename)[1]
             timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
-            filename = f"{current_user_id}_{timestamp}_{filename}"
+            # Создаем безопасное имя для сохранения на диске
+            filename = f"{current_user_id}_{timestamp}{file_ext}"
             filepath = os.path.join(folder, filename)
 
             file.save(filepath)
@@ -196,12 +253,13 @@ class MessageListResource(AuthenticatedResource):
             sender_id=current_user_id,
             chat_id=chat_id,
             media_path=media_path,
-            media_type=media_type
+            media_type=media_type,
+            file_name=file_name,
+            file_size=file_size
         )
 
         db.session.add(message)
         db.session.commit()
-         
 
         message_data = {
             'message_id': message.id,
@@ -211,10 +269,10 @@ class MessageListResource(AuthenticatedResource):
             'timestamp': message.timestamp.isoformat(),
             'is_read': False,
             'media_path': media_path,
-            'media_type': media_type
+            'media_type': media_type,
+            'file_name': file_name,
+            'file_size': file_size
         }
-
-        print("message_data", message_data)
 
         socketio.emit('new_message_sended', message_data, room=str(chat_id))
 
@@ -273,6 +331,104 @@ class MessageResource(AuthenticatedResource):
             'edited': True
         }
 
+    def delete(self, chat_id, message_id):
+        current_user_id = request.user_id
+        message = Message.query.get_or_404(message_id)
+        
+        # Проверяем, что сообщение принадлежит текущему пользователю
+        if message.sender_id != current_user_id:
+            return {'error': 'Вы не можете удалять чужие сообщения'}, 403
+            
+        # Проверяем, что сообщение принадлежит указанному чату
+        if message.chat_id != chat_id:
+            return {'error': 'Сообщение не найдено в этом чате'}, 404
+
+        # Если есть медиа-файл, удаляем его
+        if message.media_path:
+            try:
+                file_path = os.path.join(current_app.static_folder, message.media_path.lstrip('/static/'))
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception as e:
+                print(f"Ошибка при удалении файла: {e}")
+        
+        # Удаляем сообщение из базы данных
+        db.session.delete(message)
+        db.session.commit()
+        
+        # Отправляем уведомление через WebSocket
+        socketio.emit('message_deleted', {
+            'message_id': message_id,
+            'chat_id': chat_id
+        }, room=str(chat_id))
+
+        # Проверяем, является ли это сообщение последним в чате
+        last_message = Message.query.filter_by(chat_id=chat_id)\
+            .order_by(Message.timestamp.desc())\
+            .first()
+            
+        if last_message:
+            socketio.emit('chat_updated', {
+                'message_id': last_message.id,
+                'content': last_message.content,
+                'sender_id': last_message.sender_id,
+                'chat_id': chat_id,
+                'timestamp': last_message.timestamp.isoformat(),
+                'is_read': last_message.is_read
+            }, room=str(chat_id))
+        
+        return {'message': 'Сообщение успешно удалено'}, 200
+
+class UserSearchResource(AuthenticatedResource):
+    def get(self):
+        current_user_id = request.user_id
+        query = request.args.get('query', '').strip()
+        
+        if not query:
+            return {'users': []}, 200
+            
+        # Ищем пользователей по username, исключая текущего пользователя
+        users = User.query.filter(
+            User.id != current_user_id,
+            User.is_deleted == False,
+            db.or_(
+                User.username.ilike(f'%{query}%'),
+            )
+        ).limit(10).all()
+        
+        return jsonify({
+            'users': [{
+                'id': user.id,
+                'username': user.username,
+                'avatar': user.avatar
+            } for user in users]
+        })
+
+class UserStatusResource(AuthenticatedResource):
+    def get(self):
+        current_user_id = request.user_id
+        
+        # Получаем всех пользователей, кроме текущего
+        users = User.query.filter(
+            User.id != current_user_id,
+            User.is_deleted == False
+        ).all()
+        
+        # Формируем словарь статусов
+        online_users = {
+            user.id: {
+                'is_online': user.is_online,
+                'last_seen': user.last_seen.isoformat() if user.last_seen else None
+            }
+            for user in users
+        }
+        
+        return jsonify({
+            'online_users': online_users
+        })
+
 messenger_api.add_resource(ChatListResource, '/chats')
 messenger_api.add_resource(MessageListResource, '/chats/<int:chat_id>/messages')
 messenger_api.add_resource(MessageResource, '/chats/<int:chat_id>/messages/<int:message_id>')
+messenger_api.add_resource(UserSearchResource, '/users/search')
+messenger_api.add_resource(UserStatusResource, '/users/online-status')

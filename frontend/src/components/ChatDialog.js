@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import api from '../api';
 import { useParams } from 'react-router-dom';
 import './ChatDialog.css';
@@ -6,6 +6,173 @@ import socket from './webSocket';
 
 // Базовый URL API для медиа-файлов
 const API_BASE_URL = 'http://192.168.3.88:3001';
+
+
+const Message = memo(({ 
+    msg, 
+    userId, 
+    handleContextMenu,
+    getMediaUrl,
+    getMessageMediaUrl,
+    getMessageMediaType,
+    formatFileSize 
+  }) => {
+    const mediaUrl = getMessageMediaUrl(msg);
+    const mediaType = getMessageMediaType(msg);
+    const formattedMediaUrl = getMediaUrl(mediaUrl);
+    const isOnlyImage = mediaType === 'image' && !msg.content;
+    const hasImageAndText = mediaType === 'image' && msg.content;
+    const imageRef = useRef(null);
+    const [containerWidth, setContainerWidth] = useState(null);
+  
+    const updateContainerWidth = useCallback(() => {
+      if (imageRef.current && imageRef.current.parentElement) {
+        setContainerWidth(imageRef.current.parentElement.offsetWidth);
+      }
+    }, []);
+  
+    useEffect(() => {
+      updateContainerWidth();
+      window.addEventListener('resize', updateContainerWidth);
+      return () => window.removeEventListener('resize', updateContainerWidth);
+    }, [updateContainerWidth]);
+  
+    if (hasImageAndText) {
+      return (
+        <div className="message-group">
+          {/* Отдельное сообщение для изображения */}
+          <div
+            className={`message ${msg.sender_id === userId ? 'own' : 'other'} only-image no-margin`}
+            onContextMenu={(e) => handleContextMenu(e, msg)}
+          >
+            <div className="content">
+              <img 
+                src={formattedMediaUrl} 
+                alt="Изображение" 
+                className="media-image"
+                ref={imageRef}
+                onLoad={updateContainerWidth} // Обновляем ширину при загрузке изображения
+                onClick={() => window.open(formattedMediaUrl, '_blank')}
+              />
+            </div>
+          </div>
+          
+          {/* Отдельное сообщение для текста */}
+          <div
+            className={`message ${msg.sender_id === userId ? 'own' : 'other'} no-margin-top`}
+            onContextMenu={(e) => handleContextMenu(e, msg)}
+            style={{ width: containerWidth ? `${containerWidth}px` : 'auto' }}
+          >
+            <div className="content">
+              {msg.content}
+              {msg.edited && <span className="edited-mark">(ред.)</span>}
+            </div>
+            <div className="message-footer">
+              <div className="time">
+                {new Date(msg.timestamp).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </div>
+              {msg.sender_id === userId && (
+                <div className="read-status">
+                  {msg.is_read ? '✓✓' : '✓'}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+  
+    return (
+      <div
+        className={`message ${msg.sender_id === userId ? 'own' : 'other'} ${isOnlyImage ? 'only-image' : ''}`}
+        onContextMenu={(e) => handleContextMenu(e, msg)}
+      >
+        <div className="content">
+          {msg.content}
+          {msg.edited && <span className="edited-mark">(ред.)</span>}
+          {mediaUrl && (
+            <MessageMedia 
+              mediaType={mediaType}
+              formattedMediaUrl={formattedMediaUrl}
+              msg={msg}
+              formatFileSize={formatFileSize}
+            />
+          )}
+        </div>
+        <div className="message-footer">
+          <div className="time">
+            {new Date(msg.timestamp).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </div>
+          {msg.sender_id === userId && (
+            <div className="read-status">
+              {msg.is_read ? '✓✓' : '✓'}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  });
+  
+  // Мемоизированный компонент для медиа
+  const MessageMedia = memo(({ mediaType, formattedMediaUrl, msg, formatFileSize }) => {
+    switch (mediaType) {
+      case 'image':
+        return (
+          <img 
+            src={formattedMediaUrl} 
+            alt="Изображение" 
+            className="media-image"
+            onClick={() => window.open(formattedMediaUrl, '_blank')}
+            onError={(e) => {
+              console.error('Ошибка загрузки изображения:', formattedMediaUrl);
+              e.target.src = 'https://via.placeholder.com/150?text=Ошибка+загрузки';
+            }}
+          />
+        );
+      case 'video':
+        return (
+          <video 
+            controls 
+            className="media-video"
+            onError={(e) => console.error('Ошибка загрузки видео:', formattedMediaUrl)}
+          >
+            <source src={formattedMediaUrl} />
+            Ваш браузер не поддерживает видео.
+          </video>
+        );
+      case 'document':
+      default:
+        return (
+          <div className="file-preview">
+            <a 
+              href={formattedMediaUrl} 
+              download={msg.file_name} 
+              className="file-link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="file-icon">
+                {msg.file_name?.endsWith('.pdf') ? '📄' : 
+                 msg.file_name?.endsWith('.doc') || msg.file_name?.endsWith('.docx') ? '📝' :
+                 msg.file_name?.endsWith('.xls') || msg.file_name?.endsWith('.xlsx') ? '📊' :
+                 msg.file_name?.endsWith('.txt') ? '📃' :
+                 msg.file_name?.endsWith('.zip') || msg.file_name?.endsWith('.rar') ? '📦' : '📎'}
+              </div>
+              <div className="file-info">
+                <div className="file-name">{msg.file_name || 'Файл'}</div>
+                <div className="file-size">{formatFileSize(msg.file_size)}</div>
+              </div>
+            </a>
+          </div>
+        );
+    }
+  });
 
 const ChatDialog = () => {
     const [message, setMessage] = useState('');
@@ -69,14 +236,10 @@ const ChatDialog = () => {
             
             // Отмечаем все непрочитанные сообщения как прочитанные и проверяем медиа
             res.data.messages.forEach(msg => {
-                console.log("sender_id", msg.sender_id, "userId", userId);
-                
-                // Получаем медиа URL и тип
+
                 const mediaUrl = getMessageMediaUrl(msg);
                 const mediaType = getMessageMediaType(msg);
-                
-                console.log("Медиа в сообщении:", mediaUrl, mediaType);
-                console.log("++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+            
                 
                 // Предзагружаем изображения
                 if (mediaUrl && (mediaType === 'image' || msg.media_type === 'image')) {
@@ -243,7 +406,7 @@ const ChatDialog = () => {
                         } else if (path.endsWith('.mp4') || path.endsWith('.mov') || path.endsWith('.avi')) {
                             msg.media_type = 'video';
                         } else {
-                            console.error('Не удалось определить тип медиа-файла:', path);
+                            msg.media_type = 'document';
                         }
                     }
                     
@@ -270,7 +433,15 @@ const ChatDialog = () => {
                         });
                     }
                     
-                    return [...prev, msg];
+                    // Добавляем все необходимые поля для файлов
+                    const newMessage = {
+                        ...msg,
+                        file_name: msg.file_name || '',
+                        file_size: msg.file_size || 0,
+                        edited: msg.edited || false
+                    };
+                    
+                    return [...prev, newMessage];
                 });
 
                 if (isScrolledToBottom) {
@@ -319,6 +490,15 @@ const ChatDialog = () => {
             }
         };
 
+        const handleMessageDelete = (data) => {
+            console.log('Получено событие удаления сообщения:', data);
+            if (String(data.chat_id) === String(chatId["chatId"])) {
+                setMessages(prevMessages => 
+                    prevMessages.filter(msg => String(msg.message_id) !== String(data.message_id))
+                );
+            }
+        };
+
         const handleUserConnect = (data) => {
             setUserId(data.user_id);
             setIsUserIdLoaded(true);
@@ -328,12 +508,14 @@ const ChatDialog = () => {
         socket.on('new_message_sended', handleNewMessage);
         socket.on('message_status_updated', handleStatusUpdate);
         socket.on('message_edited', handleMessageEdit);
+        socket.on('message_deleted', handleMessageDelete);
     
         return () => {
             socket.off('user_connected', handleUserConnect);
             socket.off('new_message_sended', handleNewMessage);
             socket.off('message_status_updated', handleStatusUpdate);
             socket.off('message_edited', handleMessageEdit);
+            socket.off('message_deleted', handleMessageDelete);
         };
     }, [chatId["chatId"], userId]); // Убрали isScrolledToBottom из зависимостей
 
@@ -358,32 +540,69 @@ const ChatDialog = () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Проверка типа файла
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/quicktime', 'video/x-msvideo'];
-        if (!allowedTypes.includes(file.type)) {
-            alert('Неподдерживаемый формат файла. Поддерживаемые форматы: JPEG, PNG, GIF, MP4, MOV, AVI');
+        // Расширенный список поддерживаемых типов файлов
+        const allowedTypes = [
+            'image/jpeg', 'image/png', 'image/gif',
+            'video/mp4', 'video/quicktime', 'video/x-msvideo',
+            'application/pdf', 'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'text/plain', 'text/csv',
+            'application/zip', 'application/x-rar-compressed',
+            'application/octet-stream'
+        ];
+
+        // Проверяем расширение файла, если тип не определен
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'avi', 
+                                 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'csv', 
+                                 'zip', 'rar'];
+
+        if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+            alert('Неподдерживаемый формат файла. Поддерживаемые форматы: изображения, видео, документы (PDF, DOC, DOCX, XLS, XLSX), текстовые файлы (TXT, CSV), архивы (ZIP, RAR)');
             return;
         }
         
-        // Проверка размера файла (максимум 10МБ)
-        const maxSize = 10 * 1024 * 1024; // 10MB в байтах
+        // Проверка размера файла (максимум 50МБ)
+        const maxSize = 50 * 1024 * 1024; // 50MB в байтах
         if (file.size > maxSize) {
-            alert('Файл слишком большой. Максимальный размер: 10МБ');
+            alert('Файл слишком большой. Максимальный размер: 50МБ');
             return;
         }
 
         setMediaFile(file);
 
-        // Создаем превью
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            setMediaPreview(e.target.result);
-        };
-        reader.onerror = (e) => {
-            console.error('Ошибка при чтении файла:', e);
-            alert('Не удалось создать превью файла');
-        };
-        reader.readAsDataURL(file);
+        // Создаем превью для всех типов файлов
+        if (file.type.startsWith('image/')) {
+            // Для изображений показываем само изображение
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setMediaPreview(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // Для остальных файлов создаем превью с иконкой и информацией
+            const preview = {
+                type: file.type,
+                name: file.name,
+                size: formatFileSize(file.size),
+                icon: getFileIcon(file.type, fileExtension)
+            };
+            setMediaPreview(preview);
+        }
+    };
+
+    // Функция для определения иконки файла
+    const getFileIcon = (fileType, extension) => {
+        if (fileType.startsWith('video/')) return '🎥';
+        if (fileType.startsWith('application/pdf')) return '📄';
+        if (fileType.includes('word') || extension === 'doc' || extension === 'docx') return '📝';
+        if (fileType.includes('excel') || extension === 'xls' || extension === 'xlsx') return '📊';
+        if (fileType === 'text/plain' || extension === 'txt') return '📃';
+        if (fileType === 'text/csv' || extension === 'csv') return '📊';
+        if (fileType.includes('zip') || fileType.includes('rar') || extension === 'zip' || extension === 'rar') return '📦';
+        return '📎';
     };
 
     // Функция для удаления выбранного файла
@@ -557,7 +776,7 @@ const ChatDialog = () => {
     };
 
     // Обработчик выбора действия из меню
-    const handleMenuAction = (action) => {
+    const handleMenuAction = async (action) => {
         console.log('Ищем сообщение с ID:', contextMenu.messageId);
         console.log('Доступные сообщения:', messages);
         
@@ -576,6 +795,15 @@ const ChatDialog = () => {
                 break;
             case 'delete':
                 console.log('Удаление сообщения:', message.message_id);
+                try {
+                    await api.delete(`/api/messenger/chats/${chatId["chatId"]}/messages/${message.message_id}`, {
+                        withCredentials: true
+                    });
+                    // Сообщение будет удалено через WebSocket событие
+                } catch (error) {
+                    console.error('Ошибка при удалении сообщения:', error);
+                    alert('Не удалось удалить сообщение');
+                }
                 break;
             case 'copy':
                 navigator.clipboard.writeText(message.content);
@@ -585,34 +813,22 @@ const ChatDialog = () => {
     };
 
     // Функция для формирования правильного URL медиа-файла и проверки полей
-    const getMediaUrl = (url) => {
+    const getMediaUrl = useCallback((url) => {
         if (!url) return '';
-        
-        // Если путь уже является полным URL, используем его как есть
-        if (url.startsWith('http')) {
-            return url;
-        }
-        
-        // Если путь начинается с / - это относительный путь
-        if (url.startsWith('/')) {
-            return `${API_BASE_URL}${url}`;
-        }
-        
-        // Иначе добавляем слеш и базовый URL
+        if (url.startsWith('http')) return url;
+        if (url.startsWith('/')) return `${API_BASE_URL}${url}`;
         return `${API_BASE_URL}/${url}`;
-    };
+    }, []);
     
     // Функция для получения URL медиа из сообщения, учитывая разные имена полей
-    const getMessageMediaUrl = (msg) => {
-        console.log("msgpath", msg)
+    const getMessageMediaUrl = useCallback((msg) => {
         return msg.media_url || msg.media_path || msg.mediaUrl || '';
-    };
+    }, []);
     
     // Функция для получения типа медиа из сообщения
-    const getMessageMediaType = (msg) => {
-        console.log("msgtype", msg)
+    const getMessageMediaType = useCallback((msg) => {
         return msg.media_type || msg.mediaType || '';
-    };
+    }, []);
 
     // Предзагрузка изображений для кэширования
     const preloadImage = (url) => {
@@ -632,101 +848,50 @@ const ChatDialog = () => {
         });
     }, [messages]);
 
+    const formatFileSize = useCallback((bytes) => {
+        if (!bytes) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }, []);
+
+    const memoizedMessages = useMemo(() => messages.map(msg => ({
+        ...msg,
+        key: `${msg.message_id}-${msg.is_read}`
+    })), [messages]);
+
     return (
-        <div className='hide-scrollbar' style={{ overflowY: 'scroll', height: '1000px' }}>
         <div className="chat-wrapper">
-        <div className="chat-container">
-            <div
-                className="messages"
-                ref={messagesContainerRef}
-                onScroll={handleScroll}
-            >
-                {isUserIdLoaded ? (
-                    messages.length > 0 ? (
-                        messages.map((msg) => {
-                            console.log("Рендер сообщения:", msg);
-                            
-                            // Получаем медиа URL и тип, учитывая разные имена полей
-                            const mediaUrl = getMessageMediaUrl(msg);
-                            const mediaType = getMessageMediaType(msg);
-                            
-                            console.log("Медиа в сообщении при рендере:", mediaUrl, mediaType);
-                            
-                            // Проверяем наличие необходимых данных
-                            if (!msg.message_id) {
-                                console.error('Сообщение без ID:', msg);
-                                return null;
-                            }
-                            
-                            // Формируем URL для медиа
-                            const formattedMediaUrl = getMediaUrl(mediaUrl);
-                            
-                            return (
-                                <div
-                                    key={`${msg.message_id}-${msg.is_read}`}
-                            className={`message ${msg.sender_id === userId ? 'own' : 'other'}`}
-                                    onContextMenu={(e) => handleContextMenu(e, msg)}
-                                >
-                                    <div className="content">
-                                        {msg.content}
-                                        {msg.edited && <span className="edited-mark">(ред.)</span>}
-                                        
-                                        {/* Отображение медиа контента */}
-                                        {mediaUrl && mediaType === 'image' && (
-                                            <div className="message-media">
-                                                <img 
-                                                    src={formattedMediaUrl} 
-                                                    alt="Изображение" 
-                                                    className="media-image"
-                                                    onClick={() => window.open(formattedMediaUrl, '_blank')}
-                                                    onError={(e) => {
-                                                        console.error('Ошибка загрузки изображения:', formattedMediaUrl);
-                                                        e.target.src = 'https://via.placeholder.com/150?text=Ошибка+загрузки';
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-                                        
-                                        {mediaUrl && mediaType === 'video' && (
-                                            <div className="message-media">
-                                                <video 
-                                                    controls 
-                                                    className="media-video"
-                                                    onError={(e) => {
-                                                        console.error('Ошибка загрузки видео:', formattedMediaUrl);
-                                                    }}
-                                                >
-                                                    <source src={formattedMediaUrl} />
-                                                    Ваш браузер не поддерживает видео.
-                                                </video>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="message-footer">
-                            <div className="time">
-                                {new Date(msg.timestamp).toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                })}
-                                        </div>
-                                        {msg.sender_id === userId && (
-                                            <div className="read-status">
-                                                {msg.is_read ? '✓✓' : '✓'}
-                                            </div>
-                                        )}
-                            </div>
-                        </div>
-                            );
-                        })
+            <div className="chat-container">
+                <div
+                    className="messages"
+                    ref={messagesContainerRef}
+                    onScroll={handleScroll}
+                >
+                    {isUserIdLoaded ? (
+                        memoizedMessages.length > 0 ? (
+                            memoizedMessages.map((msg) => (
+                                <Message
+                                    key={msg.key}
+                                    msg={msg}
+                                    userId={userId}
+                                    handleContextMenu={handleContextMenu}
+                                    getMediaUrl={getMediaUrl}
+                                    getMessageMediaUrl={getMessageMediaUrl}
+                                    getMessageMediaType={getMessageMediaType}
+                                    formatFileSize={formatFileSize}
+                                />
+                            ))
+                        ) : (
+                            <div className="no-messages">Нет сообщений</div>
+                        )
                     ) : (
-                        <div className="no-messages">Нет сообщений</div>
-                    )
-                ) : (
-                    <div className="loading">Загрузка...</div>
-                )}
+                        <div className="loading">Загрузка...</div>
+                    )}
                     {loading && <div className="loading">Загрузка...</div>}
-                <div ref={messagesEndRef} />
-            </div>
+                    <div ref={messagesEndRef} />
+                </div>
 
                 {/* Контекстное меню */}
                 {contextMenu.show && (
@@ -762,18 +927,22 @@ const ChatDialog = () => {
                 {/* Превью выбранного медиа */}
                 {mediaPreview && (
                     <div className="media-preview-container">
-                        {mediaFile.type.startsWith('image/') ? (
+                        {typeof mediaPreview === 'string' ? (
+                            // Для изображений показываем само изображение
                             <img 
                                 src={mediaPreview} 
                                 alt="Превью" 
                                 className="media-preview-image" 
                             />
                         ) : (
-                            <video 
-                                src={mediaPreview} 
-                                className="media-preview-video" 
-                                controls
-                            />
+                            // Для остальных файлов показываем иконку и информацию
+                            <div className="file-preview">
+                                <div className="file-icon">{mediaPreview.icon}</div>
+                                <div className="file-info">
+                                    <div className="file-name">{mediaPreview.name}</div>
+                                    <div className="file-size">{mediaPreview.size}</div>
+                                </div>
+                            </div>
                         )}
                         <button 
                             className="remove-media-button"
@@ -835,7 +1004,6 @@ const ChatDialog = () => {
                         {editingMessage ? 'Сохранить' : 'Отправить'}
                 </button>
                 </form>
-            </div>
             </div>
         </div>
     );

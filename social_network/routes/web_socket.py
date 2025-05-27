@@ -29,6 +29,41 @@ def handle_connect():
         print("Соединение отклонено: ошибка аутентификации")
         return False
     print(f"User {request.user_id} connected to chat")
+    
+    user = User.query.get(request.user_id)
+    if user:
+        user.is_online = True
+        user.last_seen = datetime.today()
+        db.session.commit()
+        
+        # Уведомляем всех пользователей об изменении статуса
+        emit('user_status_changed', {
+            'user_id': user.id,
+            'is_online': True
+        }, broadcast=True)
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    # Получаем user_id из сессии
+    session_token = request.cookies.get('session_token')
+    if not session_token:
+        return
+    
+    session = Session.query.filter_by(session_token=session_token).first()
+    if not session:
+        return
+    
+    user = User.query.get(session.user_id)
+    if user:
+        user.is_online = False
+        user.last_seen = datetime.today()
+        db.session.commit()
+        
+        # Уведомляем всех пользователей об изменении статуса
+        emit('user_status_changed', {
+            'user_id': user.id,
+            'is_online': False
+        }, broadcast=True)
 
 @socketio.on('join_chat')
 def handle_join(data):
@@ -126,3 +161,9 @@ def on_leave_user_room(data):
     user_id = data.get('user_id')
     if user_id:
         leave_room(f'user_{user_id}')
+
+@socketio.on('leave_chat')
+def handle_leave_chat(data):
+    chat_id = data.get('chat_id')
+    if chat_id:
+        leave_room(str(chat_id))

@@ -13,10 +13,8 @@ def create_app(config_object=Config):
 
     Migrate(myapp, db)
 
-    from .routes import posts_bp, comments_bp, users_bp, auth_bp, messenger_bp
+    from .routes import users_bp, auth_bp, messenger_bp
 
-    myapp.register_blueprint(posts_bp, url_prefix="/api")
-    myapp.register_blueprint(comments_bp, url_prefix="/api")
     myapp.register_blueprint(users_bp, url_prefix="/api/users")
     myapp.register_blueprint(auth_bp, url_prefix="/api/auth")
     myapp.register_blueprint(messenger_bp, url_prefix='/api/messenger')
