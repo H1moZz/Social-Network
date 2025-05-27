@@ -5,7 +5,7 @@ class Config():
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BASE_DIR, 'socialnetwork.db')}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = BASE_DIR + '/static/pf_photos'
-    BASE_URL = os.getenv('REACT_APP_API_BASE_URL', 'http://localhost:3001')
+    BASE_URL = os.getenv('REACT_APP_API_BASE_URL', 'http://localhost:10000')
     TESTING = False
 
 class TestConfig(Config):
