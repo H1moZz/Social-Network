@@ -21,7 +21,7 @@ def create_app(config_object=Config):
 
     CORS(myapp, 
          resources={r"/api/*": {
-             "origins": ["http://localhost:3000", "https://your-frontend-domain.onrender.com"],
+             "origins": ["http://localhost:3000", "https://social-network-tgar.vercel.app"],
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
              "allow_headers": ["Content-Type", "Authorization"],
              "expose_headers": ["Content-Type", "Authorization"],
