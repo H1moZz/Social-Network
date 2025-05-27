@@ -62,7 +62,9 @@ class LogIn(Resource):
             value=session_token, 
             httponly=True, 
             samesite='Lax', 
-            secure=False,
+            secure=True,
+            max_age=30*24*60*60,  # 30 дней
+            path='/'
         )
         return response
     
@@ -83,7 +85,15 @@ class LogOut(Resource):
             return {'message': 'No active session'}, 200
 
         response = make_response({'message': 'Logged out successfully'}, 200)
-        response.set_cookie('session_token', value='', expires=0, path='/')
+        response.set_cookie(
+            'session_token', 
+            value='', 
+            expires=0, 
+            path='/',
+            httponly=True,
+            secure=True,
+            samesite='Lax'
+        )
         return response
 
 auth_api.add_resource(Registration, "/registration")
