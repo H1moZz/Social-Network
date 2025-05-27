@@ -3,6 +3,8 @@ FROM python:3.13.1
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
+RUN pip install gunicorn eventlet
+
 # Устанавливаем Poetry (официальный метод)
 RUN pip install --upgrade pip && \
     curl -sSL https://install.python-poetry.org | python3 - && \
@@ -19,4 +21,4 @@ COPY run.py ./
 EXPOSE 3001
 
 # Запускаем через Gunicorn + Eventlet
-CMD ["poetry", "run", "python", "run.py"]
+CMD ["poetry", "run", "gunicorn", "-k", "eventlet", "-b", "0.0.0.0:3001", "run:myapp"]
