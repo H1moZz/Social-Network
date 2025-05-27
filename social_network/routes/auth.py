@@ -16,7 +16,8 @@ CORS(auth_bp,
          "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
          "allow_headers": ["Content-Type", "Authorization"],
          "expose_headers": ["Content-Type", "Authorization"],
-         "supports_credentials": True
+         "supports_credentials": True,
+         "credentials": True
      }}
 )
 auth_api = Api(auth_bp)
@@ -76,10 +77,11 @@ class LogIn(Resource):
             'session_token', 
             value=session_token, 
             httponly=True, 
-            samesite='Lax', 
+            samesite='None',
             secure=True,
             max_age=30*24*60*60,  # 30 дней
-            path='/'
+            path='/',
+            domain=None
         )
         return response
     

@@ -25,7 +25,8 @@ def create_app(config_object=Config):
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
              "allow_headers": ["Content-Type", "Authorization"],
              "expose_headers": ["Content-Type", "Authorization"],
-             "supports_credentials": True
+             "supports_credentials": True,
+             "credentials": True
          }}
     )
 
