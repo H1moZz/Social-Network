@@ -21,4 +21,4 @@ COPY run.py ./
 EXPOSE 3001
 
 # Запускаем через Gunicorn + Eventlet
-CMD ["poetry", "run", "gunicorn", "-k", "eventlet", "-b", "0.0.0.0:3001", "run:myapp"]
+CMD ["poetry", "run", "python", "run.py"]
