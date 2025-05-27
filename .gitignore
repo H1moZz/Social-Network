@@ -7,3 +7,5 @@ map_test.py
 cert.pem
 
 key.pem
+
+docker-compose.yml
