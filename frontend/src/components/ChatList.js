@@ -229,7 +229,7 @@ const ChatList = () => {
                         <div className="avatar-container">
                             {chat.participant.avatar ? (
                                 <img 
-                                    src={`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001'}/static/pf_photos/${chat.participant.avatar}`} 
+                                    src={`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:10000'}/static/pf_photos/${chat.participant.avatar}`} 
                                     alt={chat.participant.username} 
                                     className="avatar"
                                 />

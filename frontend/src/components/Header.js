@@ -216,7 +216,7 @@ const Header = () => {
                                         >
                                             {user.avatar ? (
                                                 <img 
-                                                    src={`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001'}/static/pf_photos/${user.avatar}`}
+                                                    src={`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:10000'}/static/pf_photos/${user.avatar}`}
                                                     alt={user.username}
                                                     className="chat-avatar"
                                                 />
@@ -239,7 +239,7 @@ const Header = () => {
                         <div className="chat-header-info">
                             {currentChat?.participant?.avatar ? (
                                 <img 
-                                    src={`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001'}/static/pf_photos/${currentChat.participant.avatar}`}
+                                    src={`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:10000'}/static/pf_photos/${currentChat.participant.avatar}`}
                                     alt={currentChat.participant.username}
                                     className="chat-avatar"
                                 />
@@ -292,7 +292,7 @@ const Header = () => {
                                             <div className="chat-avatar">
                                                 {user.avatar ? (
                                                     <img 
-                                                        src={`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001'}/static/pf_photos/${user.avatar}`}
+                                                        src={`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:10000'}/static/pf_photos/${user.avatar}`}
                                                         alt={user.username}
                                                     />
                                                 ) : (

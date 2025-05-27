@@ -74,6 +74,9 @@
 .chat-info {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 55px;
 }
 
 .chat-header {
@@ -106,11 +109,25 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-height: 1.2em;
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
 }
 
 .no-messages {
     color: #666;
-    font-style: italic;
+    height: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+}
+
+.last-message .no-messages {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
 }
 
 .no-chats {

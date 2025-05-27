@@ -42,8 +42,8 @@ const MessageNotification = ({ newMessage }) => {
   };
 
   const playNotificationSound = () => {
-    const audio = new Audio('http://localhost:3001/static/sounds/notification-sound.mp3');
-audio.play().catch(error =>
+    const audio = new Audio(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:10000'}/static/sounds/notification-sound.mp3`);
+    audio.play().catch(error =>
       console.error('Ошибка воспроизведения звука:', error)
     );
   };

@@ -5,7 +5,7 @@ import './ChatDialog.css';
 import socket from './webSocket';
 
 // Базовый URL API для медиа-файлов
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:10000';
 
 
 const Message = memo(({ 
