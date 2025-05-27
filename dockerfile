@@ -21,5 +21,5 @@ COPY run.py ./
 
 EXPOSE 3001
 
-# Запускаем через Gunicorn + Eventlet
-CMD ["gunicorn", "-k", "eventlet", "-b", "0.0.0.0:3001", "run:myapp"]
+# Запускаем через Gunicorn + Eventlet с одним воркером
+CMD ["gunicorn", "--worker-class", "eventlet", "--workers", "1", "--bind", "0.0.0.0:3001", "run:myapp"]
