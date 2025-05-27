@@ -14,10 +14,7 @@ services:
     build: ./frontend
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     environment:
       NODE_ENV: development
-      REACT_APP_API_BASE_URL: http://localhost:3001
+      REACT_APP_API_BASE_URL: http://backend:3001
     command: npm start
