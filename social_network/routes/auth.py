@@ -9,7 +9,16 @@ from datetime import datetime
 from social_network.routes.AuntResource import AuthenticatedResource
 
 auth_bp = Blueprint("auth", __name__)
-CORS(auth_bp, supports_credentials=True, resources={r"/api/*": {"origins": "*"}})
+CORS(auth_bp, 
+     supports_credentials=True, 
+     resources={r"/api/*": {
+         "origins": ["http://localhost:3000", "https://social-network-tgar.vercel.app"],
+         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+         "allow_headers": ["Content-Type", "Authorization"],
+         "expose_headers": ["Content-Type", "Authorization"],
+         "supports_credentials": True
+     }}
+)
 auth_api = Api(auth_bp)
 
 class Registration(Resource):
@@ -56,7 +65,13 @@ class LogIn(Resource):
             db.session.add(new_session)
             db.session.commit()
         
-        response = make_response()
+        response = make_response({
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email
+            }
+        })
         response.set_cookie(
             'session_token', 
             value=session_token, 

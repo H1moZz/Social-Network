@@ -19,7 +19,15 @@ def create_app(config_object=Config):
     myapp.register_blueprint(auth_bp, url_prefix="/api/auth")
     myapp.register_blueprint(messenger_bp, url_prefix='/api/messenger')
 
-    CORS(myapp, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True) 
+    CORS(myapp, 
+         resources={r"/api/*": {
+             "origins": ["http://localhost:3000", "https://your-frontend-domain.onrender.com"],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "allow_headers": ["Content-Type", "Authorization"],
+             "expose_headers": ["Content-Type", "Authorization"],
+             "supports_credentials": True
+         }}
+    )
 
     db.init_app(myapp)
 
