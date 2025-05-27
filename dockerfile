@@ -3,16 +3,18 @@ FROM python:3.13.1
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
-RUN pip install gunicorn eventlet
-
 # Устанавливаем Poetry (официальный метод)
 RUN pip install --upgrade pip && \
     curl -sSL https://install.python-poetry.org | python3 - && \
-    export PATH="/root/.local/bin:$PATH"
+    ln -s /root/.local/bin/poetry /usr/local/bin/poetry
+
+# Устанавливаем Gunicorn и Eventlet
+RUN pip install gunicorn eventlet
 
 # Копируем зависимости и устанавливаем их
 COPY pyproject.toml poetry.lock ./
-RUN poetry install --no-interaction --no-ansi
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-interaction --no-ansi
 
 # Копируем исходный код
 COPY social_network ./social_network
@@ -21,4 +23,4 @@ COPY run.py ./
 EXPOSE 3001
 
 # Запускаем через Gunicorn + Eventlet
-CMD ["poetry", "run", "gunicorn", "-k", "eventlet", "-b", "0.0.0.0:3001", "run:myapp"]
+CMD ["gunicorn", "-k", "eventlet", "-b", "0.0.0.0:3001", "run:myapp"]
