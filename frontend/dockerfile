@@ -1,21 +1,14 @@
-# Используем Node.js для сборки фронтенда
-FROM node:20
-
-# Устанавливаем рабочую директорию
+FROM node:20 AS builder
 WORKDIR /app
-
-# Копируем package.json и устанавливаем зависимости
-COPY package.json package-lock.json ./
+COPY package*.json ./
 RUN npm install
-
-# Копируем весь код
 COPY . .
-
-# Собираем проект
 RUN npm run build
 
-# Запускаем сервер (если нужен)
-CMD ["npm", "start"]
+# Этап запуска статики
+FROM nginx:alpine
+COPY --from=builder /app/build /usr/share/nginx/html
 
-# Открываем порт (если нужно)
-EXPOSE 3000
+# Если хочешь настроить nginx.conf — можно тоже добавить
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
