@@ -5,7 +5,7 @@ import './ChatDialog.css';
 import socket from './webSocket';
 
 // Базовый URL API для медиа-файлов
-const API_BASE_URL = 'http://192.168.3.88:3001';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001';
 
 
 const Message = memo(({ 
@@ -236,10 +236,10 @@ const ChatDialog = () => {
             
             // Отмечаем все непрочитанные сообщения как прочитанные и проверяем медиа
             res.data.messages.forEach(msg => {
-
+                
                 const mediaUrl = getMessageMediaUrl(msg);
                 const mediaType = getMessageMediaType(msg);
-            
+                
                 
                 // Предзагружаем изображения
                 if (mediaUrl && (mediaType === 'image' || msg.media_type === 'image')) {
@@ -576,11 +576,11 @@ const ChatDialog = () => {
         // Создаем превью для всех типов файлов
         if (file.type.startsWith('image/')) {
             // Для изображений показываем само изображение
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setMediaPreview(e.target.result);
-            };
-            reader.readAsDataURL(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            setMediaPreview(e.target.result);
+        };
+        reader.readAsDataURL(file);
         } else {
             // Для остальных файлов создаем превью с иконкой и информацией
             const preview = {
@@ -863,13 +863,13 @@ const ChatDialog = () => {
 
     return (
         <div className="chat-wrapper">
-            <div className="chat-container">
-                <div
-                    className="messages"
-                    ref={messagesContainerRef}
-                    onScroll={handleScroll}
-                >
-                    {isUserIdLoaded ? (
+        <div className="chat-container">
+            <div
+                className="messages"
+                ref={messagesContainerRef}
+                onScroll={handleScroll}
+            >
+                {isUserIdLoaded ? (
                         memoizedMessages.length > 0 ? (
                             memoizedMessages.map((msg) => (
                                 <Message
@@ -883,15 +883,15 @@ const ChatDialog = () => {
                                     formatFileSize={formatFileSize}
                                 />
                             ))
-                        ) : (
-                            <div className="no-messages">Нет сообщений</div>
-                        )
                     ) : (
-                        <div className="loading">Загрузка...</div>
-                    )}
+                        <div className="no-messages">Нет сообщений</div>
+                    )
+                ) : (
+                    <div className="loading">Загрузка...</div>
+                )}
                     {loading && <div className="loading">Загрузка...</div>}
-                    <div ref={messagesEndRef} />
-                </div>
+                <div ref={messagesEndRef} />
+            </div>
 
                 {/* Контекстное меню */}
                 {contextMenu.show && (

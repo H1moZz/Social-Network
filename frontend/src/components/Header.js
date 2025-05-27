@@ -221,11 +221,11 @@ const Header = () => {
                                                     className="chat-avatar"
                                                 />
                                             ) : (
-                                                <div className="chat-avatar-placeholder">
+                                                <div className="header-chat-avatar-placeholder">
                                                     {user.username[0].toUpperCase()}
                                                 </div>
                                             )}
-                                            <div className="chat-info">
+                                            <div className="header-chat-info">
                                                 <span className="chat-username">{user.username}</span>
                                                 <span className={`chat-status ${isUserOnline(user.id) ? 'online' : ''}`}>
                                                     {getStatusText(user)}
@@ -244,11 +244,11 @@ const Header = () => {
                                     className="chat-avatar"
                                 />
                             ) : (
-                                <div className="chat-avatar-placeholder">
+                                <div className="header-chat-avatar-placeholder">
                                     {currentChat?.participant?.username?.[0]?.toUpperCase()}
                                 </div>
                             )}
-                            <div className="chat-info">
+                            <div className="header-chat-info">
                                 <span className="chat-username">{currentChat?.participant?.username}</span>
                                 {currentChat?.participant && (
                                     <span className={`chat-status ${isUserOnline(currentChat.participant.id) ? 'online' : ''}`}>
@@ -296,12 +296,12 @@ const Header = () => {
                                                         alt={user.username}
                                                     />
                                                 ) : (
-                                                    <div className="chat-avatar-placeholder">
+                                                    <div className="header-chat-avatar-placeholder">
                                                         {user.username[0].toUpperCase()}
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="chat-info">
+                                            <div className="header-chat-info">
                                                 <span className="chat-username">{user.username}</span>
                                                 <span className={`chat-status ${isUserOnline(user.id) ? 'online' : ''}`}>
                                                     {getStatusText(user)}
