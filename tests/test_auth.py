@@ -52,7 +52,7 @@ def test_registration_by_admin(client, admin_auth):
         "password": "secret",
         "profession": "Developer"
     }
-    response = client.post("/api/auth/registration", json=data)
+    response = client.post("/api/auth/registration", data=data)
     assert response.status_code == 201
     json_data = response.get_json()
     assert json_data.get("message") == "Пользователь зарегистрирован успешно"
@@ -71,7 +71,7 @@ def test_registration_by_non_admin(client):
         "email": "regular@example.com",
         "password": "secret"
     }
-    response = client.post("/api/auth/registration", json=data)
+    response = client.post("/api/auth/registration", data=data)
     assert response.status_code == 403
     json_data = response.get_json()
     assert "error" in json_data
@@ -84,10 +84,10 @@ def test_registration_duplicate_email(client, admin_auth):
         "email": "duplicate@example.com",
         "password": "secret"
     }
-    client.post("/api/auth/registration", json=data)
+    client.post("/api/auth/registration", data=data)
     
     # Пытаемся зарегистрировать второго пользователя с тем же email
-    response = client.post("/api/auth/registration", json=data)
+    response = client.post("/api/auth/registration", data=data)
     assert response.status_code == 400
     json_data = response.get_json()
     assert "error" in json_data
