@@ -3,10 +3,11 @@ import json
 from social_network.app import create_app, db
 from social_network.models import User, Session
 from social_network.config import TestConfig
-from flask_bcrypt import generate_password_hash # Импортируем функцию хеширования
+from flask_bcrypt import Bcrypt
 from datetime import datetime, timedelta
 
 app = create_app(TestConfig)
+bcrypt = Bcrypt(app)
 
 @pytest.fixture
 def client():
@@ -23,7 +24,7 @@ def client():
         admin_user = User() # Создаем объект без аргументов
         admin_user.username = "adminuser"
         admin_user.email = "admin@example.com"
-        admin_user.password = generate_password_hash("adminsecret").decode('utf-8') # Хешируем пароль
+        admin_user.password = bcrypt.generate_password_hash("adminsecret").decode('utf-8') # Хешируем пароль
         admin_user.is_admin = True # Присваиваем значение колонке
 
         db.session.add(admin_user)
@@ -32,7 +33,7 @@ def client():
         regular_user = User() # Создаем объект без аргументов
         regular_user.username = "testuser"
         regular_user.email = "test@example.com"
-        regular_user.password = generate_password_hash("secret").decode('utf-8') # Хешируем пароль
+        regular_user.password = bcrypt.generate_password_hash("secret").decode('utf-8') # Хешируем пароль
         regular_user.is_admin = False # Присваиваем значение колонке (хотя по умолчанию False, явно укажем)
 
         db.session.add(regular_user)

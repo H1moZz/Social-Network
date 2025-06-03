@@ -6,9 +6,10 @@ from social_network.config import TestConfig
 from werkzeug.datastructures import FileStorage
 import io
 import os
-from flask_bcrypt import generate_password_hash
+from flask_bcrypt import Bcrypt
 
 app = create_app(TestConfig)
+bcrypt = Bcrypt(app)
 
 @pytest.fixture
 def client():
@@ -20,12 +21,12 @@ def client():
             user1 = User() # Создаем объект без аргументов
             user1.username = "testuser"
             user1.email = "test@example.com"
-            user1.password = generate_password_hash("secret").decode('utf-8') # Хешируем пароль
+            user1.password = bcrypt.generate_password_hash("secret").decode('utf-8') # Хешируем пароль
 
             user2 = User() # Создаем объект без аргументов
             user2.username = "testuser2"
             user2.email = "test2@example.com"
-            user2.password = generate_password_hash("secret2").decode('utf-8') # Пароль должен быть уникальным в тестах
+            user2.password = bcrypt.generate_password_hash("secret2").decode('utf-8') # Пароль должен быть уникальным в тестах
 
             db.session.add_all([user1, user2])
             db.session.commit()
