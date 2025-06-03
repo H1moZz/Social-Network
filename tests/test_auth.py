@@ -1,17 +1,19 @@
 import pytest
 import json
-from social_network.app import create_app, db  # импортируй приложение и базу данных
+from social_network.app import create_app, db
 from social_network.models import User, Session
-from social_network.config import TestConfig
 import bcrypt
 from datetime import datetime
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def app():
     app = create_app()
     app.config['TESTING'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    
+    return app
+
+@pytest.fixture(scope="function")
+def client(app):
     with app.app_context():
         db.create_all()
         # Создаем администратора
@@ -24,13 +26,11 @@ def app():
         )
         db.session.add(admin)
         db.session.commit()
-        yield app
+        
+        yield app.test_client()
+        
         db.session.remove()
         db.drop_all()
-
-@pytest.fixture
-def client(app):
-    return app.test_client()
 
 @pytest.fixture
 def admin_auth(client):
