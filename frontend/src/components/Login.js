@@ -3,43 +3,36 @@ import { useNavigate } from "react-router-dom";
 import api from "../api";
 import "./Login.css";
 
-function Login() {
+function Login({ setIsAuthenticated, setUser }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const checkSession = async () => {
-            try {
-                const response = await api.get('api/auth/check_session', {
-                    withCredentials: true,
-                });
-                if (response.data.is_authenticated) {
-                    localStorage.setItem("isAuthenticated", "true");
-                    navigate('/chats');
-                }
-            } catch (error) {
-                console.error("Ошибка при проверке сессии:", error);
-            }
-        };
-
-        checkSession();
-    }, [navigate]);
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await api.post("/api/auth/login",
+            const response = await api.post("/api/auth/login",
                 { email, password },
                 {
                     headers: { "Content-Type": "application/json" },
                     withCredentials: true,
                 }
-            )
-            navigate("/chats"); 
+            );
+
+            if (response.data && response.data.user) {
+                setIsAuthenticated(true);
+                setUser(response.data.user);
+                navigate("/login");
+            } else {
+                setMessage("Ошибка входа: Не удалось получить данные пользователя.");
+            }
+
         } catch (error) {
+            console.error("Ошибка входа:", error.response?.data || error);
             setMessage("Ошибка входа: " + (error.response?.data?.error || "Неизвестная ошибка"));
+            setIsAuthenticated(false);
+            setUser(null);
         }
     };
 
@@ -75,9 +68,6 @@ function Login() {
                         </svg>
                     </button>
                 </form>
-                <p className="register-link">
-                    Еще нет аккаунта? <span onClick={() => navigate("/register")}>Зарегистрироваться</span>
-                </p>
             </div>
         </div>
     );

@@ -101,7 +101,8 @@ class ChatListResource(AuthenticatedResource):
                 'participant': {
                     'id': participant.id,
                     'username': participant.username,
-                    'avatar': participant.avatar
+                    'avatar': participant.avatar,
+                    'profession': participant.profession
                 },
                 'last_message': {
                     'content': last_message_content,
@@ -142,7 +143,8 @@ class ChatListResource(AuthenticatedResource):
         return {'id': chat.id,
                 'participant': {
                 'avatar': participant.avatar,
-                'username': participant.username}},201
+                'username': participant.username,
+                'profession': participant.profession}},201
 
 class MessageListResource(AuthenticatedResource):
     def get(self, chat_id):
@@ -393,6 +395,7 @@ class UserSearchResource(AuthenticatedResource):
             User.is_deleted == False,
             db.or_(
                 User.username.ilike(f'%{query}%'),
+                User.profession.ilike(f'%{query}%')
             )
         ).limit(10).all()
         
@@ -400,7 +403,8 @@ class UserSearchResource(AuthenticatedResource):
             'users': [{
                 'id': user.id,
                 'username': user.username,
-                'avatar': user.avatar
+                'avatar': user.avatar,
+                'profession': user.profession
             } for user in users]
         })
 

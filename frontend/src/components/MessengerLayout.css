@@ -32,7 +32,7 @@ body { /* путь к изображению *//* чтобы изображен�
 }
 
 .chat-opened .chat-list-container {
-    width: 350px;
+    width:350px;
     margin: 0 10px;
     order: 1;
 }

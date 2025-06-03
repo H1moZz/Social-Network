@@ -36,7 +36,7 @@ def handle_connect():
         user.last_seen = datetime.today()
         db.session.commit()
         
-        # Уведомляем всех пользователей об изменении статуса
+
         emit('user_status_changed', {
             'user_id': user.id,
             'is_online': True

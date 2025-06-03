@@ -9,6 +9,5 @@ class Config():
     TESTING = False
 
 class TestConfig(Config):
-    SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BASE_DIR,'test_socialnetwork.db')}"
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BASE_DIR,'test_socialnetwork.db')}"
     TESTING = True

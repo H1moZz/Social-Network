@@ -1,4 +1,4 @@
-FROM python:3.11.11
+FROM python:3.13.1
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
@@ -19,7 +19,7 @@ RUN poetry config virtualenvs.create false && \
 COPY social_network ./social_network
 COPY run.py ./
 
-EXPOSE 3001
+EXPOSE 10000
 
 # Запускаем через Gunicorn с gevent
-CMD ["gunicorn", "--worker-class", "gevent", "--workers", "1", "--bind", "0.0.0.0:3001", "run:myapp"]
+CMD ["gunicorn", "--worker-class", "eventlet", "--workers", "1", "--bind", "0.0.0.0:10000", "run:myapp"]

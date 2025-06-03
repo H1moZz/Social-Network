@@ -4,16 +4,29 @@ import api from '../api';
 import socket from './webSocket';
 import './Header.css';
 
-const Header = () => {
+// Функция для получения корректного URL аватара (скопирована из ChatList.js)
+const getAvatarUrl = (avatarPath) => {
+    if (!avatarPath) return '';
+    // Проверяем, является ли путь уже полным URL или содержит базовую часть
+    if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://') || avatarPath.startsWith('/static/')) {
+        return `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:10000'}${avatarPath}`;
+    }
+    // Если это только имя файла, добавляем полный путь
+    return `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:10000'}/static/pf_photos/${avatarPath}`;
+};
+
+const Header = ({ setIsAuthenticated, setUser, user }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [showResults, setShowResults] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [showMainMenu, setShowMainMenu] = useState(false);
     const [currentChat, setCurrentChat] = useState(null);
     const [onlineUsers, setOnlineUsers] = useState({});
     const searchTimeout = useRef(null);
     const searchRef = useRef(null);
     const profileMenuRef = useRef(null);
+    const mainMenuRef = useRef(null);
     const navigate = useNavigate();
     const { chatId } = useParams();
 
@@ -52,10 +65,13 @@ const Header = () => {
             }));
         });
 
-        // Обработчик клика вне области поиска
+        // Обработчик клика вне меню
         const handleClickOutside = (event) => {
             if (searchRef.current && !searchRef.current.contains(event.target)) {
                 setShowResults(false);
+            }
+            if (mainMenuRef.current && !mainMenuRef.current.contains(event.target)) {
+                setShowMainMenu(false);
             }
         };
 
@@ -115,7 +131,8 @@ const Header = () => {
                 participant: {
                     id: user.id,
                     username: user.username,
-                    avatar: user.avatar
+                    avatar: user.avatar,
+                    profession: user.profession
                 }
             };
 
@@ -176,9 +193,18 @@ const Header = () => {
                 withCredentials: true
             });
             // Отключаем сокет перед выходом
+            // Возвращаем обновление состояния
+            setIsAuthenticated(false);
+            setUser(null);
+            // Перенаправляем на правильный маршрут логина
             navigate('/login');
         } catch (error) {
             console.error('Ошибка при выходе:', error);
+            // Даже при ошибке выхода на бэкенде, сбросим состояние на фронтенде для безопасности
+            setIsAuthenticated(false);
+            setUser(null);
+            // Перенаправляем на правильный маршрут логина даже при ошибке
+            navigate('/login');
         }
     };
 
@@ -216,7 +242,7 @@ const Header = () => {
                                         >
                                             {user.avatar ? (
                                                 <img 
-                                                    src={`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:10000'}/static/pf_photos/${user.avatar}`}
+                                                    src={getAvatarUrl(user.avatar)}
                                                     alt={user.username}
                                                     className="chat-avatar"
                                                 />
@@ -226,7 +252,12 @@ const Header = () => {
                                                 </div>
                                             )}
                                             <div className="header-chat-info">
-                                                <span className="chat-username">{user.username}</span>
+                                                <div className="username-profession-group">
+                                                    <span className="chat-username">{user.username}</span>
+                                                    {user.profession && (
+                                                        <span className="user-profession">{user.profession}</span>
+                                                    )}
+                                                </div>
                                                 <span className={`chat-status ${isUserOnline(user.id) ? 'online' : ''}`}>
                                                     {getStatusText(user)}
                                                 </span>
@@ -239,7 +270,7 @@ const Header = () => {
                         <div className="chat-header-info">
                             {currentChat?.participant?.avatar ? (
                                 <img 
-                                    src={`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:10000'}/static/pf_photos/${currentChat.participant.avatar}`}
+                                    src={getAvatarUrl(currentChat.participant.avatar)}
                                     alt={currentChat.participant.username}
                                     className="chat-avatar"
                                 />
@@ -249,7 +280,12 @@ const Header = () => {
                                 </div>
                             )}
                             <div className="header-chat-info">
-                                <span className="chat-username">{currentChat?.participant?.username}</span>
+                                <div className="username-profession-group">
+                                    <span className="chat-username">{currentChat?.participant?.username}</span>
+                                    {currentChat?.participant?.profession && (
+                                        <span className="user-profession">{currentChat.participant.profession}</span>
+                                    )}
+                                </div>
                                 {currentChat?.participant && (
                                     <span className={`chat-status ${isUserOnline(currentChat.participant.id) ? 'online' : ''}`}>
                                         {getStatusText(currentChat.participant)}
@@ -258,15 +294,46 @@ const Header = () => {
                             </div>
                         </div>
                     </div>
+                    <div className="header-right chat-open">
+                        <button className="menu-button" onClick={() => setShowMainMenu(!showMainMenu)} ref={mainMenuRef}>
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" />
+                            </svg>
+                            {showMainMenu && (
+                                <div className="main-menu">
+                                    {user?.is_admin && (
+                                        <div className="menu-item" onClick={() => navigate('/admin/register')}>
+                                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                                <path fill="currentColor" d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M6,10V7H4V10H1V12H4V15H6V12H9V10H6M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12Z" />
+                                            </svg>
+                                            <span>Добавить пользователя</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </button>
+                    </div>
                 </>
             ) : (
                 // Шапка для списка чатов
                 <>
                     <div className="header-left">
-                        <button className="header-button">
-                            <svg viewBox="0 0 24 24" width="20" height="20">
+                        <button className="menu-button" onClick={() => setShowMainMenu(!showMainMenu)} ref={mainMenuRef}>
+                            <svg viewBox="0 0 24 24" width="24" height="24">
                                 <path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" />
                             </svg>
+                            {showMainMenu && (
+                                <div className="main-menu">
+                                    {user?.is_admin && (
+                                        <div className="menu-item" onClick={() => navigate('/admin/register')}>
+                                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                                <path fill="currentColor" d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M6,10V7H4V10H1V12H4V15H6V12H9V10H6M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12Z" />
+                                            </svg>
+                                            <span>Добавить пользователя</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </button>
                         <div className="search-container" ref={searchRef}>
                             <div className="search-input-wrapper">
@@ -292,7 +359,7 @@ const Header = () => {
                                             <div className="chat-avatar">
                                                 {user.avatar ? (
                                                     <img 
-                                                        src={`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:10000'}/static/pf_photos/${user.avatar}`}
+                                                        src={getAvatarUrl(user.avatar)}
                                                         alt={user.username}
                                                     />
                                                 ) : (
@@ -302,7 +369,12 @@ const Header = () => {
                                                 )}
                                             </div>
                                             <div className="header-chat-info">
-                                                <span className="chat-username">{user.username}</span>
+                                                <div className="username-profession-group">
+                                                    <span className="chat-username">{user.username}</span>
+                                                    {user.profession && (
+                                                        <span className="user-profession">{user.profession}</span>
+                                                    )}
+                                                </div>
                                                 <span className={`chat-status ${isUserOnline(user.id) ? 'online' : ''}`}>
                                                     {getStatusText(user)}
                                                 </span>
@@ -343,3 +415,5 @@ const Header = () => {
 };
 
 export default Header; 
+ 
+ 

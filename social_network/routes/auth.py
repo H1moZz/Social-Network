@@ -7,6 +7,10 @@ import secrets
 import bcrypt
 from datetime import datetime
 from social_network.routes.AuntResource import AuthenticatedResource
+from social_network.routes.messenger import allowed_file
+from werkzeug.utils import secure_filename
+import os
+from flask import current_app
 
 auth_bp = Blueprint("auth", __name__)
 CORS(auth_bp, 
@@ -22,23 +26,53 @@ CORS(auth_bp,
 )
 auth_api = Api(auth_bp)
 
-class Registration(Resource):
+class Registration(AuthenticatedResource):
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument("username", type=str, required=True, help="Username is required")
-        parser.add_argument("email", type=str, required=True, help="Email is required")
-        parser.add_argument("password", type=str, required=True, help="Password is required")
-        args = parser.parse_args()
+        current_user = User.query.get(request.user_id)
+        if not current_user or not current_user.is_admin:
+            return {"error": "Только администраторы могут регистрировать новых пользователей"}, 403
 
-        if User.query.filter_by(email=args["email"]).first():
-            return {"error": "User with this email already exists!"}, 400
+        # Получаем данные из request.form для текстовых полей
+        username = request.form.get("username")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        profession = request.form.get("profession")
+        
+        # Проверяем обязательные поля вручную, так как reqparse больше не используется для них
+        if not username or not email or not password:
+             return {"error": "Username, email, and password are required"}, 400
 
-        hashed_password = bcrypt.hashpw(args["password"].encode("utf-8"), bcrypt.gensalt())
-        new_user = User(username=args["username"], email=args["email"], password=hashed_password.decode("utf-8"))
+        file = request.files.get('avatar')
+
+        if User.query.filter_by(email=email).first():
+            return {"error": "Пользователь с такой почтой уже существует!"}, 400
+
+        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+
+        avatar_path = None
+        if file and allowed_file(file.filename):
+            folder = os.path.join(current_app.static_folder, 'pf_photos')
+            os.makedirs(folder, exist_ok=True)
+            
+            filename = secure_filename(file.filename)
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
+            filename = f"{timestamp}_{filename}"
+
+            filepath = os.path.join(folder, filename)
+            file.save(filepath)
+            avatar_path = f"/static/pf_photos/{filename}"
+
+        new_user = User(
+            username=username,
+            email=email,
+            password=hashed_password.decode("utf-8"),
+            profession=profession,
+            avatar=avatar_path
+        )
         db.session.add(new_user)
         db.session.commit()
 
-        return {"message": "User registered successfully"}, 201
+        return {"message": "Пользователь зарегистрирован успешно", "user_id": new_user.id}, 201
 
 class LogIn(Resource):
     def post(self):
@@ -70,7 +104,10 @@ class LogIn(Resource):
             'user': {
                 'id': user.id,
                 'username': user.username,
-                'email': user.email
+                'email': user.email,
+                'profession': user.profession,
+                'avatar': user.avatar,
+                'is_admin': user.is_admin
             }
         })
         response.set_cookie(
@@ -93,6 +130,14 @@ class  CheckSessionResource(AuthenticatedResource):
 
         return {
             'is_authenticated': True,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'profession': user.profession,
+                'avatar': user.avatar,
+                'is_admin': user.is_admin
+            }
         }, 200
 
 class LogOut(Resource):

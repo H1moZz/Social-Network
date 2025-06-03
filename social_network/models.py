@@ -64,6 +64,8 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
     avatar = db.Column(db.String(200), nullable=True)
+    profession = db.Column(db.String(100), nullable=True)
+    is_admin = db.Column(db.Boolean, default=False)
     is_deleted = db.Column(db.Boolean, default=False)
     is_online = db.Column(db.Boolean, default=False)
     last_seen = db.Column(db.DateTime, default=datetime.today())

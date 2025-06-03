@@ -18,6 +18,29 @@ def client():
         with app.app_context():
             db.drop_all()  # очищаем базу после теста
 
+# Фикстура для регистрации и логина администратора (первого пользователя)
+@pytest.fixture
+def auth_admin_client(client):
+    reg_data = {
+        "username": "adminuser",
+        "email": "admin@example.com",
+        "password": "adminsecret",
+        "profession": "Administrator"
+    }
+    client.post("/api/auth/registration", json=reg_data)
+    login_data = {
+        "email": "admin@example.com",
+        "password": "adminsecret"
+    }
+    client.post("/api/auth/login", json=login_data)
+    
+    with app.app_context():
+        admin_user = User.query.filter_by(email="admin@example.com").first()
+        assert admin_user is not None
+        assert admin_user.is_admin is True # Проверяем, что первый пользователь стал админом
+        
+    return client
+
 def test_registration_success(client):
     # Тестируем регистрацию нового пользователя
     data = {
@@ -121,3 +144,36 @@ def test_check_session_without_login(client):
     assert response.status_code == 401
     json_data = response.get_json()
     assert json_data.get("is_authenticated") is False
+
+def test_admin_register_new_user(auth_admin_client):
+    # Тестируем регистрацию нового пользователя администратором
+    data = {
+        "username": "newuser",
+        "email": "newuser@example.com",
+        "password": "newsecret",
+        "profession": "Developer"
+    }
+    response = auth_admin_client.post("/api/auth/admin/register", json=data)
+    assert response.status_code == 201
+    json_data = response.get_json()
+    assert json_data.get("message") == "User registered successfully"
+    
+    # Проверяем, что пользователь добавлен в БД и не является админом по умолчанию
+    with app.app_context():
+        new_user = User.query.filter_by(email="newuser@example.com").first()
+        assert new_user is not None
+        assert new_user.username == "newuser"
+        assert new_user.is_admin is False
+
+def test_admin_register_unauthorized(client):
+    # Тестируем попытку регистрации через админский эндпоинт без авторизации
+    data = {
+        "username": "unauthuser",
+        "email": "unauth@example.com",
+        "password": "password",
+        "profession": "Guest"
+    }
+    response = client.post("/api/auth/admin/register", json=data)
+    assert response.status_code == 401
+    json_data = response.get_json()
+    assert json_data.get("error") == "Требуется аутентификация"

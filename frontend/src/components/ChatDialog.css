@@ -36,7 +36,6 @@
     font-family: "Nunito";
     font-weight: 500;
     padding: 8px 12px;
-    border-radius: 12.5px;
     height: fit-content;
     display: flex;
     flex-direction: row;
@@ -46,7 +45,11 @@
 
 .message.own {
     margin-left: auto;
+    width: 35%;
     margin-right: 20%;
+    padding-top: 8px;
+    padding-bottom: 10px;
+    border-radius: 20px;
     max-width: fit-content;
     background-color: #2667ff;
     color: white;
@@ -55,6 +58,10 @@
 .message.other {
     align-self: flex-start;
     margin-left: 20%;
+    width: 35%;
+    padding-top: 8px;
+    padding-bottom: 10px;
+    border-radius: 20px;
     max-width: fit-content;
     background-color: #3f3f3f;
     color: rgb(255, 255, 255);
@@ -72,7 +79,7 @@
 }
 
 .message.only-image .media-image {
-    border-radius: 12px;
+    border-radius: 20px;
     max-width: 300px;
     max-height: 400px;
     object-fit: contain;
@@ -84,7 +91,7 @@
     right: 4px;
     background: rgba(0, 0, 0, 0.5);
     padding: 2px 6px;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 1rem;
     color: white;
 }
@@ -103,6 +110,7 @@
     margin-bottom: 2px;
     flex: 1;
     min-width: 0;
+    text-align: left;
 }
 
 .message .time {
@@ -636,4 +644,3 @@
     font-size: 12px;
     color: #ffffff;
 }
-

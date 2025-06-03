@@ -5,7 +5,7 @@ import ChatDialog from './ChatDialog';
 import Header from './Header';
 import './MessengerLayout.css';
 
-const MessengerLayout = () => {
+const MessengerLayout = ({ setIsAuthenticated, setUser, user }) => {
     const { chatId } = useParams();
     const chat = null;
     const [currentChat, setCurrentChat] = useState(null);
@@ -16,17 +16,17 @@ const MessengerLayout = () => {
 
     return (
         <>
-            <Header currentChat={currentChat} />
-            <div className={`messenger-layout ${chatId ? 'chat-opened' : ''}`}>
-                <div className="chat-list-container">
-                    <ChatList />
-                </div>
-                {chatId && (
-                    <div className="chat-dialog-container">
-                        <ChatDialog key={chatId} />
-                    </div>
-                )}
+            <Header currentChat={currentChat} setIsAuthenticated={setIsAuthenticated} setUser={setUser} user={user} />
+        <div className={`messenger-layout ${chatId ? 'chat-opened' : ''}`}>
+            <div className="chat-list-container">
+                <ChatList />
             </div>
+            {chatId && (
+                <div className="chat-dialog-container">
+                        <ChatDialog key={chatId} />
+                </div>
+            )}
+        </div>
         </>
     );
 };

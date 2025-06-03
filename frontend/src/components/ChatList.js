@@ -211,6 +211,16 @@ const ChatList = () => {
         }
     };
 
+    // Функция для получения корректного URL аватара
+    const getAvatarUrl = (avatarPath) => {
+        if (!avatarPath) return '';
+        // Проверяем, является ли путь уже полным URL или содержит базовую часть
+        if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://') || avatarPath.startsWith('/static/')) {
+            return `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:10000'}${avatarPath}`;
+        }
+        // Если это только имя файла, добавляем полный путь
+        return `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:10000'}/static/pf_photos/${avatarPath}`;
+    };
 
     if (loading) return <div className="chat-list">Загрузка...</div>;
     if (error) return <div className="chat-list error">{error}</div>;
@@ -229,7 +239,7 @@ const ChatList = () => {
                         <div className="avatar-container">
                             {chat.participant.avatar ? (
                                 <img 
-                                    src={`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:10000'}/static/pf_photos/${chat.participant.avatar}`} 
+                                    src={getAvatarUrl(chat.participant.avatar)} 
                                     alt={chat.participant.username} 
                                     className="avatar"
                                 />
@@ -246,6 +256,7 @@ const ChatList = () => {
                             <div className="chat-header">
                                 <div className="chat-header-left">
                                     <span className="username">{chat.participant.username}</span>
+                                    {chat.participant.profession && <span className="user-profession">{chat.participant.profession}</span>}
                                 </div>
                                 {chat.last_message && (
                                     <span className="time">
@@ -255,10 +266,7 @@ const ChatList = () => {
                             </div>
                             <div className={`last-message ${chat.unread_count > 0 ? 'unread' : ''}`}>
                                 {chat.last_message ? (
-                                    <>
-                                        {chat.last_message.sender_id === chat.participant.id ? '' : 'Вы: '}
-                                        {chat.last_message.content}
-                                    </>
+                                    `${chat.last_message.sender_id === chat.participant.id ? '' : 'Вы: '}${chat.last_message.content}`
                                 ) : (
                                     <span className="no-messages">Нет сообщений</span>
                                 )}

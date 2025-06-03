@@ -10,11 +10,11 @@
     display: flex;
     border-radius: 10px;
     padding: 15px;
-    width: 500px;
     border-bottom: 1px solid #404040;
     cursor: pointer;
     transition: background-color 0.2s;
     position: relative;
+    width: 500px;
 }
 
 .chat-item:hover {
@@ -95,6 +95,14 @@
 .username {
     font-weight: 500;
     color: #ffffff;
+}
+
+.user-profession {
+    font-size: 12px;
+    color: #b1dae7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .time {

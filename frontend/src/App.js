@@ -1,27 +1,43 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Login from "./components/Login";
 import UserProfile from "./components/UserProfile";
 import UploadAvatar from "./components/UploadAvatar";
-import RegisterPage from "./components/RegisterPage";
 import UserList from "./components/UserList";
 import MessageNotification from "./components/MessageNotification";
 import socket from "./components/webSocket";
 import MessengerLayout from './components/MessengerLayout';
+import AdminRegister from './components/AdminRegister';
+import api from './api';
 
 const AppContent = () => {
   const location = useLocation();
-  const hiddenRoutes = ["/", "/register"];
-  const isAuthenticated = localStorage.getItem("isAuthenticated");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
   const [newMessage, setNewMessage] = useState(null);
 
   useEffect(() => {
-    socket.on('user_connected', (data) =>{
-      localStorage.setItem("current_user", data.user_id)
+    const checkAuth = async () => {
+      try {
+        const response = await api.get('/api/auth/check_session', { withCredentials: true });
+        setIsAuthenticated(response.data.is_authenticated);
+        setUser(response.data.user);
+      } catch (error) {
+        setIsAuthenticated(false);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkAuth();
+
+    socket.on('user_connected', (data) => {
+      console.log("User connected via socket:", data);
     });
 
     socket.on('new_message_sended', (data) => {
-      if (localStorage.getItem("current_user") != data.sender_id)
+      if (user && user.id !== data.sender_id)
       {
         setNewMessage(data);
       }
@@ -29,21 +45,37 @@ const AppContent = () => {
 
     return () => {
       socket.off('new_message_sended');
+      socket.off('user_connected');
     };
   }, []);
+
+  if (loading) {
+    return <div>Загрузка приложения...</div>;
+  }
+
+  const PrivateRoute = ({ element: Element, ...rest }) => {
+    return isAuthenticated ? <Element {...rest} user={rest.user} /> : <Navigate to="/login" />;
+  };
+
+  const AdminRoute = ({ element: Element, ...rest }) => {
+    return isAuthenticated && rest.user?.is_admin ? <Element {...rest} user={rest.user} /> : <Navigate to="/" />;
+  };
 
   return (
     <>
       <MessageNotification newMessage={newMessage} />
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/profile" element={isAuthenticated ? <UserProfile /> : <Navigate to="/" />} />
-        <Route path="/avatar" element={isAuthenticated ? <UploadAvatar /> : <Navigate to="/" />} />
-        <Route path="/users" element={isAuthenticated ? <UserList /> : <Navigate to="/" />} />
-        <Route path="/chats" element={<MessengerLayout />} />
-        <Route path="/chats/:chatId" element={<MessengerLayout />} />
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="/login" element={!isAuthenticated ? <Login setIsAuthenticated={setIsAuthenticated} setUser={setUser} /> : <Navigate to="/" />} />
+        <Route path="/admin/register" element={
+          <AdminRoute element={AdminRegister} user={user} />
+        } />
+        <Route path="/" element={<PrivateRoute element={MessengerLayout} setIsAuthenticated={setIsAuthenticated} setUser={setUser} user={user} />} />
+        <Route path="/chats" element={<PrivateRoute element={MessengerLayout} setIsAuthenticated={setIsAuthenticated} setUser={setUser} user={user} />} />
+        <Route path="/chats/:chatId" element={<PrivateRoute element={MessengerLayout} setIsAuthenticated={setIsAuthenticated} setUser={setUser} user={user} />} />
+        <Route path="/profile" element={<PrivateRoute element={UserProfile} user={user} />} />
+        <Route path="/avatar" element={<PrivateRoute element={UploadAvatar} user={user} />} />
+        <Route path="/users" element={<PrivateRoute element={UserList} user={user} />} />
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </>
   );
