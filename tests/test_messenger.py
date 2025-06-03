@@ -15,19 +15,20 @@ def client():
     with app.test_client() as client:
         with app.app_context():
             db.create_all()
+            # Создаем пользователей напрямую в тестовой БД
+            user1 = User(username="testuser", email="test@example.com", password="secret")
+            user2 = User(username="testuser2", email="test2@example.com", password="secret2") # Пароль должен быть уникальным в тестах
+            db.session.add_all([user1, user2])
+            db.session.commit()
+
         yield client
+
         with app.app_context():
             db.drop_all()
 
-# Фикстура для регистрации и логина обычного пользователя
+# Фикстура для логина первого пользователя
 @pytest.fixture
 def auth_client(client):
-    reg_data = {
-        "username": "testuser",
-        "email": "test@example.com",
-        "password": "secret"
-    }
-    client.post("/api/auth/registration", json=reg_data)
     login_data = {
         "email": "test@example.com",
         "password": "secret"
@@ -35,18 +36,12 @@ def auth_client(client):
     client.post("/api/auth/login", json=login_data)
     return client
 
-# Фикстура для регистрации и логина второго обычного пользователя
+# Фикстура для логина второго пользователя
 @pytest.fixture
 def auth_client2(client):
-    reg_data = {
-        "username": "testuser2",
-        "email": "test2@example.com",
-        "password": "secret"
-    }
-    client.post("/api/auth/registration", json=reg_data)
     login_data = {
         "email": "test2@example.com",
-        "password": "secret"
+        "password": "secret2"
     }
     client.post("/api/auth/login", json=login_data)
     return client
@@ -54,9 +49,12 @@ def auth_client2(client):
 # Тест: Создание чата между двумя пользователями
 def test_create_chat(auth_client, auth_client2):
     with app.app_context():
+        # Находим пользователей в БД, созданных фикстурой client
+        user1 = User.query.filter_by(email="test@example.com").first()
         user2 = User.query.filter_by(email="test2@example.com").first()
+        assert user1 is not None
         assert user2 is not None
-        
+
     response = auth_client.post("/api/messenger/chats", json={
         "participant_id": user2.id
     })
@@ -69,8 +67,11 @@ def test_create_chat(auth_client, auth_client2):
 # Тест: Отправка текстового сообщения
 def test_send_message(auth_client, auth_client2):
     with app.app_context():
+        # Находим пользователей в БД, созданных фикстурой client
         user1 = User.query.filter_by(email="test@example.com").first()
         user2 = User.query.filter_by(email="test2@example.com").first()
+        assert user1 is not None
+        assert user2 is not None
         chat = Chat.get_or_create_personal_chat(user1.id, user2.id)
         db.session.commit()
 
@@ -80,7 +81,7 @@ def test_send_message(auth_client, auth_client2):
     assert response.status_code == 201
     message_data = response.get_json()
     assert "message_id" in message_data
-    
+
     with app.app_context():
         message = Message.query.get(message_data["message_id"])
         assert message is not None
@@ -91,11 +92,14 @@ def test_send_message(auth_client, auth_client2):
 # Тест: Получение списка сообщений в чате
 def test_get_messages(auth_client, auth_client2):
     with app.app_context():
+        # Находим пользователей в БД, созданных фикстурой client
         user1 = User.query.filter_by(email="test@example.com").first()
         user2 = User.query.filter_by(email="test2@example.com").first()
+        assert user1 is not None
+        assert user2 is not None
         chat = Chat.get_or_create_personal_chat(user1.id, user2.id)
         db.session.commit()
-        
+
         # Отправляем несколько сообщений
         msg1 = Message(content="Message 1", sender_id=user1.id, chat_id=chat.id)
         msg2 = Message(content="Message 2", sender_id=user2.id, chat_id=chat.id)
@@ -113,8 +117,11 @@ def test_get_messages(auth_client, auth_client2):
 # Тест: Отправка сообщения с файлом (изображение)
 def test_send_file_message_image(auth_client, auth_client2, client):
     with app.app_context():
+        # Находим пользователей в БД, созданных фикстурой client
         user1 = User.query.filter_by(email="test@example.com").first()
         user2 = User.query.filter_by(email="test2@example.com").first()
+        assert user1 is not None
+        assert user2 is not None
         chat = Chat.get_or_create_personal_chat(user1.id, user2.id)
         db.session.commit()
 
@@ -154,17 +161,21 @@ def test_send_file_message_image(auth_client, auth_client2, client):
 # Тест: Редактирование сообщения
 def test_edit_message(auth_client, auth_client2):
     with app.app_context():
+        # Находим пользователей в БД, созданных фикстурой client
         user1 = User.query.filter_by(email="test@example.com").first()
         user2 = User.query.filter_by(email="test2@example.com").first()
+        assert user1 is not None
+        assert user2 is not None
         chat = Chat.get_or_create_personal_chat(user1.id, user2.id)
         db.session.commit()
-        
+
         # Отправляем сообщение
         msg = Message(content="Original content", sender_id=user1.id, chat_id=chat.id)
         db.session.add(msg)
         db.session.commit()
-        
-    response = auth_client.put(f"/api/messenger/chats/{chat.id}/messages/{msg.id}", json={
+        msg_id = msg.id
+
+    response = auth_client.put(f"/api/messenger/chats/{chat.id}/messages/{msg_id}", json={
         "content": "Edited content"
     })
     assert response.status_code == 200
@@ -172,20 +183,23 @@ def test_edit_message(auth_client, auth_client2):
     assert "message_id" in json_data
     assert json_data["content"] == "Edited content"
     assert json_data["edited"] is True
-    
+
     with app.app_context():
-        edited_msg = Message.query.get(msg.id)
+        edited_msg = Message.query.get(msg_id)
         assert edited_msg.content == "Edited content"
         assert edited_msg.edited is True
 
 # Тест: Удаление сообщения
 def test_delete_message(auth_client, auth_client2):
     with app.app_context():
+        # Находим пользователей в БД, созданных фикстурой client
         user1 = User.query.filter_by(email="test@example.com").first()
         user2 = User.query.filter_by(email="test2@example.com").first()
+        assert user1 is not None
+        assert user2 is not None
         chat = Chat.get_or_create_personal_chat(user1.id, user2.id)
         db.session.commit()
-        
+
         # Отправляем сообщение
         msg = Message(content="Message to delete", sender_id=user1.id, chat_id=chat.id)
         db.session.add(msg)
@@ -196,18 +210,19 @@ def test_delete_message(auth_client, auth_client2):
     assert response.status_code == 200
     json_data = response.get_json()
     assert json_data.get("message") == "Сообщение успешно удалено"
-    
+
     with app.app_context():
         deleted_msg = Message.query.get(msg_id)
         assert deleted_msg is None
 
 # Тест: Поиск пользователей
 def test_user_search(auth_client, auth_client2):
-    # user1 уже зарегистрирован через auth_client фикстуру
-    # user2 уже зарегистрирован через auth_client2 фикстуру
     with app.app_context():
+        # Находим пользователей в БД, созданных фикстурой client
         user1 = User.query.filter_by(email="test@example.com").first()
         user2 = User.query.filter_by(email="test2@example.com").first()
+        assert user1 is not None
+        assert user2 is not None
         # Добавим профессию для поиска
         user2.profession = "Engineer"
         db.session.commit()
@@ -240,12 +255,15 @@ def test_user_search(auth_client, auth_client2):
 # Тест: Получение списка чатов
 def test_get_chat_list(auth_client, auth_client2):
     with app.app_context():
+        # Находим пользователей в БД, созданных фикстурой client
         user1 = User.query.filter_by(email="test@example.com").first()
         user2 = User.query.filter_by(email="test2@example.com").first()
+        assert user1 is not None
+        assert user2 is not None
         # Создаем чат
         chat = Chat.get_or_create_personal_chat(user1.id, user2.id)
         db.session.commit()
-        
+
         # Отправляем сообщение, чтобы чат появился в списке
         msg = Message(content="Hello", sender_id=user2.id, chat_id=chat.id)
         db.session.add(msg)
@@ -261,8 +279,9 @@ def test_get_chat_list(auth_client, auth_client2):
     assert chat_info["id"] == chat.id
     assert chat_info["participant"]["username"] == user2.username
     assert chat_info["last_message"]["content"] == "Hello"
-    assert chat_info["unread_count"] == 1 # user1 не читал сообщение от user2
-    
+    # Проверяем, что unread_count корректен для получателя (user1)
+    assert chat_info["unread_count"] == 1
+
     # Получаем список чатов для user2 (auth_client2)
     response2 = auth_client2.get("/api/messenger/chats")
     assert response2.status_code == 200
@@ -273,4 +292,5 @@ def test_get_chat_list(auth_client, auth_client2):
     assert chat_info2["id"] == chat.id
     assert chat_info2["participant"]["username"] == user1.username
     assert chat_info2["last_message"]["content"] == "Hello"
-    assert chat_info2["unread_count"] == 0 # user2 отправил сообщение, оно для него прочитано 
+    # Проверяем, что unread_count корректен для отправителя (user2)
+    assert chat_info2["unread_count"] == 0 
