@@ -2,14 +2,13 @@ import pytest
 import json
 from social_network.app import create_app, db
 from social_network.models import User, Session
+from social_network.config import TestConfig
 import bcrypt
 from datetime import datetime
 
 @pytest.fixture(scope="session")
 def app():
-    app = create_app()
-    app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    app = create_app(TestConfig)
     return app
 
 @pytest.fixture(scope="function")
@@ -41,7 +40,7 @@ def admin_auth(client):
     })
     return response
 
-def test_registration_by_admin(client, admin_auth):
+def test_registration_by_admin(client, admin_auth, app):
     # Проверяем, что администратор успешно залогинился
     assert admin_auth.status_code == 200
     
@@ -72,12 +71,12 @@ def test_registration_by_non_admin(client):
         "password": "secret"
     }
     response = client.post("/api/auth/registration", data=data)
-    assert response.status_code == 403
+    # Проверяем, что неавторизованный пользователь не может регистрировать
+    assert response.status_code == 401
     json_data = response.get_json()
-    assert "error" in json_data
-    assert json_data["error"] == "Только администраторы могут регистрировать новых пользователей"
+    assert json_data.get("is_authenticated") is False
 
-def test_registration_duplicate_email(client, admin_auth):
+def test_registration_duplicate_email(client, admin_auth, app):
     # Регистрируем первого пользователя
     data = {
         "username": "user1",

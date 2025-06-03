@@ -28,7 +28,7 @@ auth_api = Api(auth_bp)
 
 class Registration(AuthenticatedResource):
     def post(self):
-        current_user = User.query.get(request.user_id)
+        current_user = db.session.get(User, request.user_id)
         if not current_user or not current_user.is_admin:
             return {"error": "Только администраторы могут регистрировать новых пользователей"}, 403
 
@@ -122,9 +122,9 @@ class LogIn(Resource):
         )
         return response
     
-class  CheckSessionResource(AuthenticatedResource):
+class CheckSessionResource(AuthenticatedResource):
     def get(self):
-        user = User.query.get(request.user_id)
+        user = db.session.get(User, request.user_id)
         if not user:
             return {'is_authenticated': False}, 401
 
