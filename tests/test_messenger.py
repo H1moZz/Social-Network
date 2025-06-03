@@ -6,6 +6,7 @@ from social_network.config import TestConfig
 from werkzeug.datastructures import FileStorage
 import io
 import os
+from flask_bcrypt import generate_password_hash
 
 app = create_app(TestConfig)
 
@@ -15,9 +16,17 @@ def client():
     with app.test_client() as client:
         with app.app_context():
             db.create_all()
-            # Создаем пользователей напрямую в тестовой БД
-            user1 = User(username="testuser", email="test@example.com", password="secret")
-            user2 = User(username="testuser2", email="test2@example.com", password="secret2") # Пароль должен быть уникальным в тестах
+            # Создаем пользователей напрямую в тестовой БД (пароли хешируются)
+            user1 = User() # Создаем объект без аргументов
+            user1.username = "testuser"
+            user1.email = "test@example.com"
+            user1.password = generate_password_hash("secret").decode('utf-8') # Хешируем пароль
+
+            user2 = User() # Создаем объект без аргументов
+            user2.username = "testuser2"
+            user2.email = "test2@example.com"
+            user2.password = generate_password_hash("secret2").decode('utf-8') # Пароль должен быть уникальным в тестах
+
             db.session.add_all([user1, user2])
             db.session.commit()
 
@@ -33,7 +42,8 @@ def auth_client(client):
         "email": "test@example.com",
         "password": "secret"
     }
-    client.post("/api/auth/login", json=login_data)
+    response = client.post("/api/auth/login", json=login_data)
+    assert response.status_code == 200 # Проверяем, что логин успешен
     return client
 
 # Фикстура для логина второго пользователя
@@ -43,7 +53,8 @@ def auth_client2(client):
         "email": "test2@example.com",
         "password": "secret2"
     }
-    client.post("/api/auth/login", json=login_data)
+    response = client.post("/api/auth/login", json=login_data)
+    assert response.status_code == 200 # Проверяем, что логин успешен
     return client
 
 # Тест: Создание чата между двумя пользователями

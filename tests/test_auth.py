@@ -1,8 +1,10 @@
 import pytest
 import json
 from social_network.app import create_app, db
-from social_network.models import User
+from social_network.models import User, Session
 from social_network.config import TestConfig
+from flask_bcrypt import generate_password_hash # Импортируем функцию хеширования
+from datetime import datetime, timedelta
 
 app = create_app(TestConfig)
 
@@ -17,21 +19,22 @@ def client():
 
         db.create_all()  # создаём таблицы
 
-        # Создаем администратора
-        admin_user = User(
-            username="adminuser",
-            email="admin@example.com",
-            password="adminsecret",
-            is_admin=True # Явно указываем, что это админ
-        )
+        # Создаем администратора (пароль хешируется)
+        admin_user = User() # Создаем объект без аргументов
+        admin_user.username = "adminuser"
+        admin_user.email = "admin@example.com"
+        admin_user.password = generate_password_hash("adminsecret").decode('utf-8') # Хешируем пароль
+        admin_user.is_admin = True # Присваиваем значение колонке
+
         db.session.add(admin_user)
 
-        # Создаем обычного пользователя
-        regular_user = User(
-            username="testuser",
-            email="test@example.com",
-            password="secret"
-        )
+        # Создаем обычного пользователя (пароль хешируется)
+        regular_user = User() # Создаем объект без аргументов
+        regular_user.username = "testuser"
+        regular_user.email = "test@example.com"
+        regular_user.password = generate_password_hash("secret").decode('utf-8') # Хешируем пароль
+        regular_user.is_admin = False # Присваиваем значение колонке (хотя по умолчанию False, явно укажем)
+
         db.session.add(regular_user)
 
         db.session.commit() # Сохраняем пользователей в БД
@@ -46,7 +49,7 @@ def client():
         db.drop_all()
         ctx.pop() # Деактивируем контекст
 
-# Фикстура для логина администратора
+# Фикстура для логина администратора - теперь использует HTTP логин
 @pytest.fixture
 def auth_admin_client(client):
     login_data = {
@@ -57,7 +60,7 @@ def auth_admin_client(client):
     assert response.status_code == 200 # Проверяем, что логин успешен
     return client
 
-# Фикстура для логина обычного пользователя
+# Фикстура для логина обычного пользователя - теперь использует HTTP логин
 @pytest.fixture
 def auth_client(client):
     login_data = {
@@ -73,7 +76,7 @@ def test_check_session_without_login(client):
     response = client.get("/api/auth/check_session")
     assert response.status_code == 401
     json_data = response.get_json()
-    # Обновлено: Проверяем наличие ключа 'error' или 'is_authenticated'
+    # Проверяем наличие ключа 'error' или 'is_authenticated'
     assert 'error' in json_data or ('is_authenticated' in json_data and json_data['is_authenticated'] is False)
 
 # Тест: Регистрация нового пользователя администратором через админский эндпоинт
