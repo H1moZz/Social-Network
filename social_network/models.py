@@ -73,7 +73,10 @@ class User(db.Model):
     def __repr__(self):
         return f"<User> {self.username}"
 
-    def __init__(self, username, email, password):
+    def __init__(self, username, email, password, is_admin=False, profession=None, avatar=None):
         self.username = username
         self.email = email
         self.password = password
+        self.is_admin = is_admin
+        self.profession = profession
+        self.avatar = avatar
