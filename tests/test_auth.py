@@ -140,3 +140,39 @@ def test_logout(client, admin_auth):
     assert check_response.status_code == 401
     json_data = check_response.get_json()
     assert json_data.get("is_authenticated") is False
+
+def test_registration_by_regular_user(client):
+    """Тест регистрации обычным пользователем (не админом)"""
+    # Создаем обычного пользователя
+    regular_user = User(
+        username="regular",
+        email="regular@example.com",
+        password=bcrypt.hashpw("regular123".encode("utf-8"), bcrypt.gensalt()).decode("utf-8"),
+        is_admin=False
+    )
+    with client.application.app_context():
+        db.session.add(regular_user)
+        db.session.commit()
+
+    # Логинимся как обычный пользователь
+    login_response = client.post(
+        "/api/auth/login",
+        json={
+            "email": "regular@example.com",
+            "password": "regular123"
+        }
+    )
+    assert login_response.status_code == 200
+
+    # Пытаемся зарегистрировать нового пользователя
+    response = client.post(
+        "/api/auth/registration",
+        json={
+            "username": "newuser",
+            "email": "newuser@example.com",
+            "password": "newuser123",
+            "profession": "Developer"
+        }
+    )
+    assert response.status_code == 403
+    assert response.json["error"] == "Только администраторы могут регистрировать новых пользователей"
