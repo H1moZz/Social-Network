@@ -1,61 +1,63 @@
 .admin-register-container {
     display: flex;
     justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: #f5f6fa;
+    align-items: flex-start;
+    min-height: calc(100vh - 75px);
     padding: 20px;
+    background-color: #161616;
 }
 
 .admin-register-card {
-    background: white;
-    padding: 2rem;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: #1e1e1e;
+    border-radius: 10px;
+    padding: 20px;
     width: 100%;
     max-width: 500px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .admin-register-card h2 {
+    color: #ffffff;
+    margin-bottom: 20px;
     text-align: center;
-    color: #2d3436;
-    margin-bottom: 2rem;
+    font-size: 24px;
 }
 
 .admin-register-form {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 15px;
 }
 
 .input-group {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 5px;
 }
 
 .input-group label {
-    color: #2d3436;
-    font-weight: 500;
+    color: #ffffff;
+    font-size: 14px;
 }
 
 .input-group input {
-    padding: 0.8rem;
-    border: 1px solid #dfe6e9;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    transition: border-color 0.3s;
+    padding: 10px;
+    border: 1px solid #333;
+    border-radius: 5px;
+    background-color: #2a2a2a;
+    color: #ffffff;
+    font-size: 14px;
 }
 
 .input-group input:focus {
     outline: none;
-    border-color: #74b9ff;
+    border-color: #2667ff;
 }
 
 .avatar-upload {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 10px;
 }
 
 .avatar-upload input[type="file"] {
@@ -70,7 +72,7 @@
     height: 100px;
     border-radius: 50%;
     overflow: hidden;
-    margin: 0 auto;
+    background-color: #2a2a2a;
 }
 
 .avatar-preview img {
@@ -79,60 +81,67 @@
     object-fit: cover;
 }
 
-.message {
-    padding: 1rem;
-    border-radius: 0.5rem;
-    text-align: center;
-    font-weight: 500;
-}
-
-.message.success {
-    background-color: #a8e6cf;
-    color: #2d3436;
-}
-
-.message.error {
-    background-color: #ffcdd2;
-    color: #c62828;
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
 }
 
 .submit-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 1rem;
-    background-color: #74b9ff;
+    padding: 10px 20px;
+    background-color: #2667ff;
     color: white;
     border: none;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    font-weight: 500;
+    border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    font-size: 14px;
+    transition: background-color 0.2s;
 }
 
 .submit-button:hover {
-    background-color: #0984e3;
+    background-color: #1a4fc7;
 }
 
-.submit-button svg {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
+.cancel-button {
+    padding: 10px 20px;
+    background-color: #666;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+    background-color: #555;
+}
+
+.message {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.message.success {
+    background-color: #28a745;
+    color: white;
+}
+
+.message.error {
+    background-color: #dc3545;
+    color: white;
 }
 
 @media (max-width: 768px) {
     .admin-register-card {
-        padding: 1.5rem;
+        padding: 15px;
     }
-    
-    .admin-register-form {
-        gap: 1rem;
-    }
-    
-    .input-group input {
-        padding: 0.7rem;
+
+    .button-group {
+        flex-direction: column;
     }
 } 
  

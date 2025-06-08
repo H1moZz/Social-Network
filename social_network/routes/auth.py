@@ -84,6 +84,9 @@ class LogIn(Resource):
         user = User.query.filter_by(email=args["email"]).first()
         if not user or not bcrypt.checkpw(args["password"].encode("utf-8"), user.password.encode('utf-8')):
             return {"error": "Неверная почта или пароль!"}, 401
+            
+        if user.is_deleted:
+            return {"error": "Аккаунт был удален!"}, 403
 
         current_user_id = user.id
         session_token = 0
@@ -127,6 +130,23 @@ class CheckSessionResource(AuthenticatedResource):
         user = db.session.get(User, request.user_id)
         if not user:
             return {'is_authenticated': False}, 401
+            
+        if user.is_deleted:
+            # Удаляем сессию пользователя
+            Session.query.filter_by(user_id=user.id).delete()
+            db.session.commit()
+            
+            response = make_response({'is_authenticated': False}, 403)
+            response.set_cookie(
+                'session_token', 
+                value='', 
+                expires=0, 
+                path='/',
+                httponly=True,
+                secure=True,
+                samesite='Lax'
+            )
+            return response
 
         return {
             'is_authenticated': True,
@@ -158,7 +178,88 @@ class LogOut(Resource):
         )
         return response
 
+class UsersListResource(AuthenticatedResource):
+    def get(self):
+        current_user = db.session.get(User, request.user_id)
+        if not current_user or not current_user.is_admin:
+            return {"error": "Unauthorized"}, 403
+        
+        # Получаем всех пользователей, включая удаленных
+        users = User.query.all()
+        return {
+            'users': [{
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'profession': user.profession,
+                'avatar': user.avatar,
+                'is_admin': user.is_admin,
+                'is_deleted': user.is_deleted
+            } for user in users]
+        }
+
+class UserResource(AuthenticatedResource):
+    def put(self, user_id):
+        current_user = db.session.get(User, request.user_id)
+        if not current_user or not current_user.is_admin:
+            return {"error": "Unauthorized"}, 403
+        
+        user = User.query.get_or_404(user_id)
+        
+        if 'username' in request.form:
+            user.username = request.form['username']
+        if 'email' in request.form:
+            user.email = request.form['email']
+        if 'profession' in request.form:
+            user.profession = request.form['profession']
+        
+        if 'avatar' in request.files:
+            file = request.files['avatar']
+            if file and allowed_file(file.filename):
+                folder = os.path.join(current_app.static_folder, 'pf_photos')
+                os.makedirs(folder, exist_ok=True)
+                
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
+                filename = f"{timestamp}_{filename}"
+                
+                filepath = os.path.join(folder, filename)
+                file.save(filepath)
+                user.avatar = f"/static/pf_photos/{filename}"
+        
+        db.session.commit()
+        return {"message": "User updated successfully"}
+
+    def delete(self, user_id):
+        current_user = db.session.get(User, request.user_id)
+        if not current_user or not current_user.is_admin:
+            return {"error": "Unauthorized"}, 403
+        
+        user = User.query.get_or_404(user_id)
+        
+        if user.id == current_user.id:
+            return {"error": "Cannot delete yourself"}, 400
+        
+        # Мягкое удаление - устанавливаем флаг is_deleted
+        user.is_deleted = True
+        db.session.commit()
+        return {"message": "User marked as deleted successfully"}
+
+    def post(self, user_id):
+        current_user = db.session.get(User, request.user_id)
+        if not current_user or not current_user.is_admin:
+            return {"error": "Unauthorized"}, 403
+        
+        user = User.query.get_or_404(user_id)
+        
+        # Восстановление пользователя
+        user.is_deleted = False
+        db.session.commit()
+        return {"message": "User restored successfully"}
+
 auth_api.add_resource(Registration, "/registration")
 auth_api.add_resource(LogIn, "/login")
 auth_api.add_resource(LogOut, '/logout')
 auth_api.add_resource(CheckSessionResource, '/check_session')
+auth_api.add_resource(UsersListResource, '/users')
+auth_api.add_resource(UserResource, '/users/<int:user_id>')

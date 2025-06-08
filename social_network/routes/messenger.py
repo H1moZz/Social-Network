@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request, current_app
 from flask_restful import Api, reqparse
 from flask_cors import CORS
 from social_network.app import db
-from social_network.models import Chat, Message, User
+from social_network.models import Chat, Message, User, chat_participants
 from social_network.routes.AuntResource import AuthenticatedResource
 from social_network.routes.web_socket import socketio
 from datetime import datetime
@@ -59,21 +59,27 @@ def get_file_type(filename):
 class ChatListResource(AuthenticatedResource): 
     def get(self):
         current_user_id = request.user_id 
+        
+        # Получаем все чаты пользователя через связь в модели Chat
         user = User.query.get(current_user_id)
         if not user:
             return {'error': 'Пользователь не найден'}, 404
-
-        chats = user.chats
+            
         chat_list = []
         
-        for chat in chats:
-            # Получаем собеседника
-            participant = next((p for p in chat.participants if p.id != current_user_id), None)
+        for chat in user.chats:
+            # Получаем информацию о другом участнике чата через промежуточную таблицу
+            participant = db.session.query(User).join(chat_participants).filter(
+                chat_participants.c.chat_id == chat.id,
+                User.id != current_user_id
+            ).first()
             
+            # Пропускаем чаты только если участник не найден
+            if not participant:
+                continue
+                
             # Получаем последнее сообщение
-            last_message = Message.query.filter_by(chat_id=chat.id)\
-                .order_by(Message.id.desc())\
-                .first()
+            last_message = Message.query.filter_by(chat_id=chat.id).order_by(Message.timestamp.desc()).first()
             
             # Получаем количество непрочитанных сообщений
             unread_count = Message.query.filter_by(
@@ -81,16 +87,14 @@ class ChatListResource(AuthenticatedResource):
                 is_read=False
             ).filter(Message.sender_id != current_user_id).count()
             
-            # Формируем контент последнего сообщения
             last_message_content = None
             if last_message:
-                if last_message.media_type:
-                    if last_message.media_type == 'image':
-                        last_message_content = '🖼️ Изображение'
-                    elif last_message.media_type == 'video':
-                        last_message_content = '🎥 Видео'
-                    else:
-                        last_message_content = f'📎 {last_message.file_name or "Файл"}'
+                if last_message.media_type == 'image':
+                    last_message_content = '📷 Изображение'
+                elif last_message.media_type == 'video':
+                    last_message_content = '🎥 Видео'
+                elif last_message.media_type == 'document':
+                    last_message_content = '📄 Документ'
                 else:
                     last_message_content = last_message.content
             
@@ -100,7 +104,8 @@ class ChatListResource(AuthenticatedResource):
                     'id': participant.id,
                     'username': participant.username,
                     'avatar': participant.avatar,
-                    'profession': participant.profession
+                    'profession': participant.profession,
+                    'is_deleted': participant.is_deleted
                 },
                 'last_message': {
                     'content': last_message_content,
@@ -384,7 +389,6 @@ class UserSearchResource(AuthenticatedResource):
         # Ищем пользователей по username, исключая текущего пользователя
         users = User.query.filter(
             User.id != current_user_id,
-            User.is_deleted == False,
             db.or_(
                 User.username.ilike(f'%{query}%'),
                 User.profession.ilike(f'%{query}%')

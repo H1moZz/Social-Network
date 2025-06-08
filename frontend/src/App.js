@@ -8,7 +8,9 @@ import MessageNotification from "./components/MessageNotification";
 import socket from "./components/webSocket";
 import MessengerLayout from './components/MessengerLayout';
 import AdminRegister from './components/AdminRegister';
+import AdminUsers from './components/AdminUsers';
 import api from './api';
+import Header from './components/Header';
 
 const AppContent = () => {
   const location = useLocation();
@@ -68,6 +70,9 @@ const AppContent = () => {
         <Route path="/login" element={!isAuthenticated ? <Login setIsAuthenticated={setIsAuthenticated} setUser={setUser} /> : <Navigate to="/" />} />
         <Route path="/admin/register" element={
           <AdminRoute element={AdminRegister} user={user} />
+        } />
+        <Route path="/admin/users" element={
+          <AdminRoute element={AdminUsers} user={user} />
         } />
         <Route path="/" element={<PrivateRoute element={MessengerLayout} setIsAuthenticated={setIsAuthenticated} setUser={setUser} user={user} />} />
         <Route path="/chats" element={<PrivateRoute element={MessengerLayout} setIsAuthenticated={setIsAuthenticated} setUser={setUser} user={user} />} />
