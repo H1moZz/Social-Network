@@ -23,6 +23,35 @@
     margin-bottom: 20px;
 }
 
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.back-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: #404040;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.back-button:hover {
+    background-color: #505050;
+}
+
+.back-button svg {
+    width: 20px;
+    height: 20px;
+}
+
 .admin-users-header h2 {
     color: #ffffff;
     margin: 0;
@@ -161,6 +190,7 @@
 .user-info {
     display: flex;
     align-items: center;
+    color: white;
     gap: 1rem;
 }
 
@@ -187,6 +217,8 @@
 .user-info h4 {
     color: #ffffff;
     margin: 0;
+    font-size: 1.1rem;
+    font-weight: 500;
 }
 
 .user-info p {

@@ -180,7 +180,18 @@ function AdminUsers() {
         <div className="admin-users-container">
             <div className="admin-users-card">
                 <div className="admin-users-header">
-                    <h2>Управление пользователями</h2>
+                    <div className="header-left">
+                        <button 
+                            className="back-button"
+                            onClick={() => navigate('/admin')}
+                        >
+                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                <path fill="currentColor" d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+                            </svg>
+                            Назад
+                        </button>
+                        <h2>Управление пользователями</h2>
+                    </div>
                     <button 
                         className="add-user-button"
                         onClick={() => navigate('/admin/register')}
