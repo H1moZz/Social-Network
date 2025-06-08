@@ -61,7 +61,7 @@
     width: 35%;
     padding-top: 8px;
     padding-bottom: 10px;
-    border-radius: 20px;
+    border-radius: 10px;
     max-width: fit-content;
     background-color: #3f3f3f;
     color: rgb(255, 255, 255);
@@ -71,11 +71,14 @@
 .message.only-image {
     background: none;
     padding: 0px;
+    width: fit-content;
 }
 
 .message.only-image .content {
     padding: 0;
     width: fit-content;
+    display: flex;
+    flex-direction: column;
 }
 
 .message.only-image .media-image {
@@ -135,6 +138,7 @@
     font-size: 0.65rem;
     align-self: flex-end;
     opacity: 0.8;
+    margin-left: 3px;
     margin-bottom: -3px;
     color: #ffffff;
     align-self: flex-end;
@@ -629,6 +633,8 @@
 .message-group .message.only-image .content {
     width: fit-content;
     margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .file-preview {
