@@ -183,8 +183,7 @@ function AdminUsers() {
                     <div className="header-left">
                         <button 
                             className="back-button-admin"
-                            onClick={() => navigate('/admin')}
-                        >
+                            onClick={() => navigate('/admin/')}>
                             <svg viewBox="0 0 24 24" width="20" height="20">
                                 <path fill="currentColor" d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
                             </svg>
@@ -204,7 +203,7 @@ function AdminUsers() {
                 </div>
                 
                 {editingUser ? (
-                    <form onSubmit={handleSubmit} className="admin-users-form">
+                    <form onSubmit={handleSubmit} className="admin-users-form"> 
                         <div className="input-group">
                             <label htmlFor="username">Имя пользователя</label>
                             <input

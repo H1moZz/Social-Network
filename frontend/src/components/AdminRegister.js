@@ -87,6 +87,14 @@ function AdminRegister() {
     return (
         <div className="admin-register-container">
             <div className="admin-register-card">
+            <button 
+                className="back-button-admin"
+                onClick={() => navigate('/admin/users')}>
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                    <path fill="currentColor" d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+                </svg>
+                Назад
+            </button>
                 <h2>Регистрация нового пользователя</h2>
                 <form onSubmit={handleSubmit} className="admin-register-form">
                     <div className="input-group">
