@@ -80,8 +80,6 @@ class ChatListResource(AuthenticatedResource):
                 chat_id=chat.id,
                 is_read=False
             ).filter(Message.sender_id != current_user_id).count()
-
-            print('---------------------------------')
             
             # Формируем контент последнего сообщения
             last_message_content = None
@@ -114,8 +112,6 @@ class ChatListResource(AuthenticatedResource):
                 'unread_count': unread_count
             }
             chat_list.append(chat_info)
-
-            print("СЮДА СМОТРИ", chat_info['unread_count'])
             
         # Сортируем чаты по времени последнего сообщения
         chat_list.sort(
@@ -135,10 +131,7 @@ class ChatListResource(AuthenticatedResource):
             return {'error': 'Такого пользователя не существует'}, 404
         
         chat = Chat.get_or_create_personal_chat(current_user_id, participant.id)
-        
-        print(chat.id)
         participant = next((p for p in chat.participants if p.id != current_user_id), None)
-        print("werfghjkbvcvbnm",)
 
         return {'id': chat.id,
                 'participant': {
@@ -302,7 +295,6 @@ class MessageResource(AuthenticatedResource):
         message.edited = True  # Добавим флаг, что сообщение было отредактировано
         
         db.session.commit()
-        print("message.chat_id", message.chat_id)
         
         # Отправляем уведомление через WebSocket
         socketio.emit('message_edited', {

@@ -2,51 +2,38 @@ import React, { useEffect } from 'react';
 
 const MessageNotification = ({ newMessage }) => {
   useEffect(() => {
-    if (newMessage) {
-      console.log("Получено новое сообщение для уведомления:", newMessage);
-      
-      if ("Notification" in window) {
-        if (Notification.permission === "granted") {
-          console.log("Уведомления разрешены, показываем уведомление");
-          showNotification(newMessage);
-        } else if (Notification.permission !== "denied") {
-          console.log("Запрашиваем разрешение на уведомления");
-          Notification.requestPermission().then(permission => {
-            if (permission === "granted") {
-              console.log("Разрешение получено, показываем уведомление");
-              showNotification(newMessage);
-            } else {
-              console.log("Разрешение не получено");
-            }
-          });
-        } else {
-          console.log("Уведомления заблокированы пользователем");
+    const showNotification = async () => {
+      if (!newMessage) return;
+
+      if (Notification.permission === 'granted') {
+        const notification = new Notification('Новое сообщение', {
+          body: newMessage.content,
+          icon: '/path/to/icon.png'
+        });
+
+        try {
+          const audio = new Audio('/path/to/notification.mp3');
+          await audio.play();
+        } catch (error) {
+          console.error('Ошибка при воспроизведении звука:', error);
         }
-      } else {
-        console.log("Ваш браузер не поддерживает уведомления");
+      } else if (Notification.permission !== 'denied') {
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            const notification = new Notification('Новое сообщение', {
+              body: newMessage.content,
+              icon: '/path/to/icon.png'
+            });
+          }
+        } catch (error) {
+          console.error('Ошибка при запросе разрешения на уведомления:', error);
+        }
       }
-  
-      console.log("Пытаемся воспроизвести звук");
-      playNotificationSound();
-    }
+    };
+
+    showNotification();
   }, [newMessage]);
-
-  const showNotification = (message) => {
-    try {
-      new Notification(`Новое сообщение от ${message.sender_name}`, {
-        body: message.content,
-      });
-    } catch (error) {
-      console.error("Ошибка создания уведомления:", error);
-    }
-  };
-
-  const playNotificationSound = () => {
-    const audio = new Audio(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:10000'}/static/sounds/notification-sound.mp3`);
-    audio.play().catch(error =>
-      console.error('Ошибка воспроизведения звука:', error)
-    );
-  };
 
   return null;
 };

@@ -49,7 +49,7 @@
     margin-right: 20%;
     padding-top: 8px;
     padding-bottom: 10px;
-    border-radius: 20px;
+    border-radius: 10px;
     max-width: fit-content;
     background-color: #2667ff;
     color: white;
@@ -67,28 +67,26 @@
     color: rgb(255, 255, 255);
 }
 
-/* Стили для сообщений только с изображением */
+/* Стили для сообщений только с изображением (без текста) */
 .message.only-image {
-    padding: 0;
     background: none;
-    align-self: flex-end;
+    padding: 0px;
 }
 
 .message.only-image .content {
     padding: 0;
+    width: fit-content;
 }
 
 .message.only-image .media-image {
     border-radius: 20px;
     max-width: 300px;
     max-height: 400px;
-    object-fit: contain;
 }
 
 .message.only-image .message-footer {
     position: absolute;
-    bottom: 4px;
-    right: 4px;
+    bottom: 30px;
     background: rgba(0, 0, 0, 0.5);
     padding: 2px 6px;
     border-radius: 10px;
@@ -102,12 +100,26 @@
 
 .message.only-image.other .message-footer {
     position: absolute;
+    right: 4px;
 }
 
-.message .content {
+/* Стили для изображений в сообщениях с текстом */
+.message-group .message.only-image .content .media-image {
+    display: block;
+    height: auto;
+    border-radius: 20px;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    position: relative;
+    object-fit: contain;
+    max-width:300px;
+    max-height: 400px;
+    width: fit-content;
+}
+
+.message.only-image .content {
     word-wrap: break-word;
     word-break: break-word;
-    margin-bottom: 2px;
     flex: 1;
     min-width: 0;
     text-align: left;
@@ -204,13 +216,28 @@
 }
 
 .messages::-webkit-scrollbar {
-    display: none; /* Скрываем скроллбар в Chrome, Safari */
+    width: 8px;
+    display: scroll;
+}
+
+.messages::-webkit-scrollbar-track {
+    background: #2a2a2a;
+    border-radius: 4px;
+}
+
+.messages::-webkit-scrollbar-thumb {
+    background: #4a4a4a;
+    border-radius: 4px;
+}
+
+.messages::-webkit-scrollbar-thumb:hover {
+    background: #5a5a5a;
 }
 
 .message-footer {
     display: flex;
     align-items: flex-end;
-    gap: 4px;
+    gap: 2px;
     font-size: 0.65rem;
     opacity: 0.7;
     white-space: nowrap;
@@ -558,20 +585,19 @@
 .message-group {
     display: flex;
     flex-direction: column;
-    margin: 10px 0;
-    /* Убираем max-width здесь, чтобы изображение могло определить ширину */
-    /* max-width: 60%; */
+    max-width: 100%;
     
 }
 
 .message-group .message.own {
     margin-right: 20%;
-    max-width: 60%;
+    margin-left: auto;
 }
 
 .message-group .message.other {
     align-self: flex-start;
     margin-left: 20%;
+    margin-right: auto;
 }
 
 .message-group .message.no-margin {
@@ -580,34 +606,25 @@
 }
 
 .message-group .message.no-margin-top {
-    margin-top: -18px;
+    margin-top: -10px;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
-    width: 100%; /* Текстовая часть занимает 100% ширины своего родителя (message-group) */
+    max-width: 100%;
     box-sizing: border-box;
     padding: 8px 12px;
 }
 
 .message-group .message.no-margin-top .content {
-    width: 100%; /* Контент текста тоже на 100% ширины */
+    width: 100%;
     display: flex;
     flex-direction: column;
+    margin-bottom: 0;
 }
 
 /* Добавляем стиль для родительского div изображения, чтобы он не растягивался */
 .message-group .message.only-image .content {
     width: fit-content;
-}
-
-.message-group .message.only-image .content .media-image {
-    display: block;
-    /* width: auto; Изображение использует свою естественную ширину */
-    height: auto; /* Сохраняем пропорции */
-    border-radius: 12px;
-    object-fit: contain;
-    max-width: 400px; /* Максимальная ширина изображения, можно настроить */
-    min-width: 100px; /* Минимальная ширина изображения */
-    width: fit-content; /* Ширина изображения по его содержимому */
+    margin-bottom: 0;
 }
 
 .file-preview {
@@ -643,4 +660,18 @@
 .file-size {
     font-size: 12px;
     color: #ffffff;
+}
+
+.message .content {
+    word-wrap: break-word;
+    word-break: break-word;
+    margin-bottom: 2px;
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+}
+
+.message-group .message.only-image .content {
+    width: fit-content;
+    margin-bottom: 0;
 }

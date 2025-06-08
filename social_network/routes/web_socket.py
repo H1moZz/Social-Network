@@ -19,7 +19,6 @@ def auntificate_websocket():
         return False
 
     request.user_id = session.user_id
-    print("АЙДИ ПОЛЬЗОВАТЕЛЯ: ",session.user_id)
     emit('user_connected', {'user_id': request.user_id}, room=request.sid)
     return True
 
@@ -89,9 +88,6 @@ def handle_message(data):
     db.session.add(new_message)
     db.session.commit()
 
-    print(f"📩 Отправка нового сообщения в чат {data['chat_id']}")
-    print(f"📩 Отправка нового сообщения в чат от {sender.username}")
-    
     message_data = {
         'message_id': new_message.id,
         'content': new_message.content,
@@ -116,8 +112,6 @@ def handle_message(data):
                 sender_id=sender.id  # Добавляем фильтр по отправителю
             ).count()
             
-            print(f"Непрочитанных сообщений для пользователя {participant.id}: {unread_count}")
-            
             chat_update_data = {
                 'message_id': new_message.id,
                 'content': new_message.content,
@@ -135,10 +129,8 @@ def handle_message_read(data):
     reader_id = data['user_id']
     chat_id = data['chat_id']
     
-    print(f"📩 СОБЩЕНИЕ ЧИТАЕМ {data['chat_id']}")
     message = Message.query.get(int(message_id))
     if message and message.sender_id != reader_id:
-        print("хуня")
         message.is_read = True
         db.session.commit()
         
@@ -152,9 +144,7 @@ def handle_message_read(data):
 def on_join_user_room(data):
     user_id = data.get('user_id')
     if user_id:
-        print(f"User {user_id} joining personal room user_{user_id}")
         join_room(f'user_{user_id}')
-        print(f"User {user_id} successfully joined personal room")
 
 @socketio.on('leave_user_room')
 def on_leave_user_room(data):
