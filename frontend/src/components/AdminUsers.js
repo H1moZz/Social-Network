@@ -182,7 +182,7 @@ function AdminUsers() {
                 <div className="admin-users-header">
                     <div className="header-left">
                         <button 
-                            className="back-button"
+                            className="back-button-admin"
                             onClick={() => navigate('/admin')}
                         >
                             <svg viewBox="0 0 24 24" width="20" height="20">
@@ -276,17 +276,17 @@ function AdminUsers() {
                                         <img 
                                             src={getAvatarUrl(user.avatar)} 
                                             alt={user.username} 
-                                            className="user-avatar"
+                                            className="user-avatar-admin"
                                         />
                                     ) : (
-                                        <div className="user-avatar-placeholder">
+                                        <div className="user-avatar-placeholder-admin">
                                             {user.username[0].toUpperCase()}
                                         </div>
                                     )}
                                     <div className="user-details">
                                         <h3>{user.username}</h3>
                                         <p>{user.email}</p>
-                                        {user.profession && <p className="user-profession">{user.profession}</p>}
+                                        {user.profession && <p className="user-profession-admin">{user.profession}</p>}
                                         <p>Статус: {user.is_deleted ? 'Удален' : 'Активен'}</p>
                                     </div>
                                 </div>

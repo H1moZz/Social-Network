@@ -14,7 +14,7 @@
     cursor: pointer;
     transition: background-color 0.2s;
     position: relative;
-    width: 500px;
+    width: 320px;
 }
 
 .chat-item:hover {
@@ -76,7 +76,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    min-height: 55px;
+    min-height: 50px;
 }
 
 .chat-header {
@@ -99,8 +99,8 @@
 
 .user-profession {
     font-size: 12px;
+    word-wrap: break-word;
     color: #b1dae7;
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }

@@ -29,7 +29,7 @@
     gap: 1rem;
 }
 
-.back-button {
+.back-button-admin {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -194,14 +194,14 @@
     gap: 1rem;
 }
 
-.user-avatar {
+.user-avatar-admin {
     width: 50px;
     height: 50px;
     border-radius: 50%;
     object-fit: cover;
 }
 
-.user-avatar-placeholder {
+.user-avatar-placeholder-admin {
     width: 50px;
     height: 50px;
     border-radius: 50%;
@@ -227,9 +227,8 @@
     font-size: 0.9rem;
 }
 
-.user-profession {
-    color: #666 !important;
-    font-style: italic;
+.user-profession-admin {
+    color: #b7e2ff !important;
 }
 
 .user-actions {
