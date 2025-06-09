@@ -20,8 +20,8 @@ const Message = memo(({
     const mediaUrl = getMessageMediaUrl(msg);
     const mediaType = getMessageMediaType(msg);
     const formattedMediaUrl = getMediaUrl(mediaUrl);
-    const isOnlyImage = mediaType === 'image' && !msg.content;
-    const hasImageAndText = mediaType === 'image' && msg.content;
+    const isOnlyMedia = (mediaType === 'image' || mediaType === 'video') && !msg.content;
+    const hasMediaAndText = (mediaType === 'image' || mediaType === 'video') && msg.content;
     const imageRef = useRef(null);
     const [containerWidth, setContainerWidth] = useState(null);
   
@@ -37,23 +37,35 @@ const Message = memo(({
       return () => window.removeEventListener('resize', updateContainerWidth);
     }, [updateContainerWidth]);
   
-    if (hasImageAndText) {
+    if (hasMediaAndText) {
       return (
         <div className="message-group">
-          {/* Отдельное сообщение для изображения */}
+          {/* Отдельное сообщение для медиа */}
           <div
-            className={`message ${msg.sender_id === userId ? 'own' : 'other'} only-image no-margin`}
+            className={`message ${msg.sender_id === userId ? 'own' : 'other'} ${mediaType === 'video' ? 'only-video' : 'only-image'} no-margin`}
             onContextMenu={(e) => handleContextMenu(e, msg)}
           >
             <div className="content">
-              <img 
-                src={formattedMediaUrl} 
-                alt="Изображение" 
-                className="media-image"
-                ref={imageRef}
-                onLoad={updateContainerWidth} // Обновляем ширину при загрузке изображения
-                onClick={() => window.open(formattedMediaUrl, '_blank')}
-              />
+              {mediaType === 'image' ? (
+                <img 
+                  src={formattedMediaUrl} 
+                  alt="Изображение" 
+                  className="media-image"
+                  ref={imageRef}
+                  onLoad={updateContainerWidth}
+                  onClick={() => window.open(formattedMediaUrl, '_blank')}
+                />
+              ) : (
+                <video 
+                  controls 
+                  className="media-video"
+                  ref={imageRef}
+                  onLoadedMetadata={updateContainerWidth}
+                >
+                  <source src={formattedMediaUrl} />
+                  Ваш браузер не поддерживает видео.
+                </video>
+              )}
             </div>
           </div>
           
@@ -87,7 +99,7 @@ const Message = memo(({
   
     return (
       <div
-        className={`message ${msg.sender_id === userId ? 'own' : 'other'} ${isOnlyImage ? 'only-image' : ''}`}
+        className={`message ${msg.sender_id === userId ? 'own' : 'other'} ${isOnlyMedia ? (mediaType === 'video' ? 'only-video' : 'only-image') : ''}`}
         onContextMenu={(e) => handleContextMenu(e, msg)}
       >
         <div className="content">
